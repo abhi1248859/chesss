@@ -40,12 +40,21 @@ export default function Home() {
     const unsubscribe = onAuthChange(async (user) => {
       setUser(user);
       if (user) {
-        const profile = await getUserProfile(user.uid);
-        if (profile) {
-          setMaxUnlockedDifficulty(profile.maxUnlockedDifficulty);
-           if (profile.maxUnlockedDifficulty > 50) {
-            toast({ title: "Premium unlocked!", description: "You can now access all difficulty levels." });
+        try {
+          const profile = await getUserProfile(user.uid);
+          if (profile) {
+            setMaxUnlockedDifficulty(profile.maxUnlockedDifficulty);
+            if (profile.maxUnlockedDifficulty > 50) {
+              toast({ title: "Premium unlocked!", description: "You can now access all difficulty levels." });
+            }
           }
+        } catch (error) {
+          console.error("Failed to get user profile:", error);
+          toast({
+            title: "Database Connection Error",
+            description: "Could not connect to the database. Please ensure Firestore is enabled in your Firebase project.",
+            variant: "destructive",
+          });
         }
       } else {
         // Reset for logged out users
