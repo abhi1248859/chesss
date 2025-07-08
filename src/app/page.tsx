@@ -10,6 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { onAuthChange, signInWithGoogle, signOutUser } from '@/lib/auth';
 import type { User } from 'firebase/auth';
+import { getUserProfile, unlockPremiumFeatures } from '@/lib/firestore';
+import PaymentDialog from '@/components/payment-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Home() {
   const [game, setGame] = useState(() => new ChessGame());
@@ -25,15 +28,33 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState({ analysis: false, suggestion: false });
   const [difficulty, setDifficulty] = useState<number>(30);
   const [user, setUser] = useState<User | null>(null);
+  
+  const [maxUnlockedDifficulty, setMaxUnlockedDifficulty] = useState(50);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [difficultyToUnlock, setDifficultyToUnlock] = useState<number | null>(null);
+  const { toast } = useToast();
 
   const playerColor = 'w';
 
   useEffect(() => {
-    const unsubscribe = onAuthChange((user) => {
+    const unsubscribe = onAuthChange(async (user) => {
       setUser(user);
+      if (user) {
+        const profile = await getUserProfile(user.uid);
+        if (profile) {
+          setMaxUnlockedDifficulty(profile.maxUnlockedDifficulty);
+           if (profile.maxUnlockedDifficulty > 50) {
+            toast({ title: "Premium unlocked!", description: "You can now access all difficulty levels." });
+          }
+        }
+      } else {
+        // Reset for logged out users
+        setMaxUnlockedDifficulty(50);
+        setDifficulty(d => Math.min(d, 50));
+      }
     });
     return () => unsubscribe();
-  }, []);
+  }, [toast]);
 
   const handleSignIn = async () => {
     await signInWithGoogle();
@@ -165,6 +186,49 @@ export default function Home() {
       setIsLoading(prev => ({ ...prev, suggestion: false }));
     }
   }, [game, difficulty, isAITurn]);
+  
+  const handleDifficultyChange = useCallback((newDifficulty: number) => {
+    if (newDifficulty > maxUnlockedDifficulty) {
+      if (user) {
+        setDifficultyToUnlock(newDifficulty);
+        setIsPaymentDialogOpen(true);
+      } else {
+        toast({
+          title: 'Sign in required',
+          description: 'Please sign in to unlock premium difficulty levels.',
+          variant: 'destructive',
+        });
+        handleSignIn();
+      }
+    } else {
+      setDifficulty(newDifficulty);
+    }
+  }, [maxUnlockedDifficulty, user, toast]);
+
+  const handleConfirmPayment = useCallback(async () => {
+    if (!user) return;
+    try {
+      await unlockPremiumFeatures(user.uid);
+      setMaxUnlockedDifficulty(100);
+      if (difficultyToUnlock) {
+        setDifficulty(difficultyToUnlock);
+      }
+      toast({
+        title: 'Success!',
+        description: 'Premium levels unlocked. You can now challenge the full power AI.',
+      });
+    } catch (error) {
+      console.error("Failed to unlock premium features:", error);
+      toast({
+        title: 'Error',
+        description: 'There was a problem unlocking premium features.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsPaymentDialogOpen(false);
+      setDifficultyToUnlock(null);
+    }
+  }, [user, difficultyToUnlock, toast]);
 
   const gameStatusText = useMemo(() => {
     if (game.gameOver) {
@@ -222,7 +286,9 @@ export default function Home() {
             <GameControls
               status={gameStatusText}
               difficulty={difficulty}
-              onDifficultyChange={setDifficulty}
+              onDifficultyChange={handleDifficultyChange}
+              maxUnlockedDifficulty={maxUnlockedDifficulty}
+              isLoggedIn={!!user}
               onNewGame={handleNewGame}
               onUndo={handleUndo}
               onAnalysis={handleAnalysis}
@@ -237,6 +303,11 @@ export default function Home() {
           </div>
         </div>
       </div>
+       <PaymentDialog
+        open={isPaymentDialogOpen}
+        onOpenChange={setIsPaymentDialogOpen}
+        onConfirmPayment={handleConfirmPayment}
+      />
     </main>
   );
 }

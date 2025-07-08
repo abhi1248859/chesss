@@ -7,7 +7,7 @@ import { Slider } from './ui/slider';
 import { Label } from './ui/label';
 import { Separator } from './ui/separator';
 import { ScrollArea } from './ui/scroll-area';
-import { BrainCircuit, RotateCcw, Search, Wand2, Loader2, Info, History } from 'lucide-react';
+import { BrainCircuit, RotateCcw, Search, Wand2, Loader2, Info, History, Lock } from 'lucide-react';
 
 interface GameControlsProps {
   status: string;
@@ -23,9 +23,11 @@ interface GameControlsProps {
   fenHistory: string[];
   moveHistory: string[];
   isAITurn?: boolean;
+  maxUnlockedDifficulty: number;
+  isLoggedIn: boolean;
 }
 
-const getPowerLevelDescription = (powerLevel: number) => {
+const getPowerLevelLabel = (powerLevel: number) => {
     if (powerLevel <= 10) return 'Beginner';
     if (powerLevel <= 20) return 'Casual';
     if (powerLevel <= 30) return 'Intermediate';
@@ -52,6 +54,8 @@ const GameControls: FC<GameControlsProps> = ({
   fenHistory,
   moveHistory,
   isAITurn,
+  maxUnlockedDifficulty,
+  isLoggedIn,
 }) => {
   const formattedMoveHistory = useMemo(() => {
     return moveHistory.reduce((acc: string[][], move, i) => {
@@ -63,6 +67,17 @@ const GameControls: FC<GameControlsProps> = ({
       return acc;
     }, []);
   }, [moveHistory]);
+  
+  const difficultyLabel = useMemo(() => {
+    const label = getPowerLevelLabel(difficulty);
+    if (difficulty > maxUnlockedDifficulty) {
+      if (!isLoggedIn) {
+        return <span className="flex items-center gap-1.5"><Lock className="w-3 h-3"/>Sign in to Unlock</span>;
+      }
+      return <span className="flex items-center gap-1.5"><Lock className="w-3 h-3"/>Locked (Unlock for ₹10)</span>
+    }
+    return label;
+  }, [difficulty, maxUnlockedDifficulty, isLoggedIn]);
 
   return (
     <Card className="shadow-lg h-full flex flex-col">
@@ -82,7 +97,7 @@ const GameControls: FC<GameControlsProps> = ({
         
         <div className="space-y-3 pt-2">
           <Label htmlFor="difficulty-slider" className="flex justify-between items-center">
-            <span>Difficulty: {getPowerLevelDescription(difficulty)}</span>
+            <span className="text-sm">Difficulty: {difficultyLabel}</span>
             <span className="text-muted-foreground font-mono">{difficulty}/100</span>
           </Label>
           <Slider
