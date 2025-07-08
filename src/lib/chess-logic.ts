@@ -249,7 +249,7 @@ export class ChessGame {
     return this.isSquareAttacked(kingPos, opponentColor);
   }
   
-  private findKing(color: PlayerColor): Position | null {
+  public findKing(color: PlayerColor): Position | null {
     for (let r = 0; r < 8; r++) {
       for (let c = 0; c < 8; c++) {
         const piece = this.get({row: r, col: c});

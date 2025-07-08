@@ -28,6 +28,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState({ analysis: false, suggestion: false });
   const [difficulty, setDifficulty] = useState<number>(30);
   const [user, setUser] = useState<User | null>(null);
+  const [kingCheckPosition, setKingCheckPosition] = useState<Position | null>(null);
   
   const [maxUnlockedDifficulty, setMaxUnlockedDifficulty] = useState(50);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
@@ -151,6 +152,15 @@ export default function Home() {
     }
   }, [isAITurn, makeAIMove]);
 
+  useEffect(() => {
+    if (game.isCheck) {
+      const kingPos = game.findKing(game.turn);
+      setKingCheckPosition(kingPos);
+    } else {
+      setKingCheckPosition(null);
+    }
+  }, [fenHistory, game]);
+
   const handleUndo = useCallback(() => {
     if (fenHistory.length < 3 || isAITurn) return; // Need at least start, player move, and AI move FENs
 
@@ -245,7 +255,7 @@ export default function Home() {
     }
     if (game.isCheck) return "Check!";
     return `${game.turn === 'w' ? 'White' : 'Black'}'s Turn`;
-  }, [game]);
+  }, [game, fenHistory]);
 
 
   return (
@@ -283,6 +293,7 @@ export default function Home() {
               selectedSquare={selectedSquare}
               validMoves={validMoves}
               playerColor={playerColor}
+              kingInCheckPosition={kingCheckPosition}
             />
              {isAITurn && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">

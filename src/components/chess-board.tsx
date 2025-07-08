@@ -11,9 +11,10 @@ interface ChessBoardProps {
   selectedSquare: Position | null;
   validMoves: Position[];
   playerColor: 'w' | 'b';
+  kingInCheckPosition: Position | null;
 }
 
-const ChessBoard: FC<ChessBoardProps> = ({ board, onSquareClick, selectedSquare, validMoves, playerColor }) => {
+const ChessBoard: FC<ChessBoardProps> = ({ board, onSquareClick, selectedSquare, validMoves, playerColor, kingInCheckPosition }) => {
   const isFlipped = playerColor === 'b';
   const boardRows = isFlipped ? [...board].reverse() : board;
 
@@ -35,6 +36,7 @@ const ChessBoard: FC<ChessBoardProps> = ({ board, onSquareClick, selectedSquare,
             const isLightSquare = (actualRowIndex + actualColIndex) % 2 !== 0;
             const isSelected = selectedSquare?.row === actualRowIndex && selectedSquare?.col === actualColIndex;
             const isMoveTarget = isValidMove(pos);
+            const isKingInCheck = !!kingInCheckPosition && kingInCheckPosition.row === actualRowIndex && kingInCheckPosition.col === actualColIndex;
 
             return (
               <div
@@ -47,6 +49,9 @@ const ChessBoard: FC<ChessBoardProps> = ({ board, onSquareClick, selectedSquare,
                 )}
               >
                 {piece && <ChessPiece piece={piece} />}
+                {isKingInCheck && (
+                  <div className="absolute inset-0 bg-destructive/50" />
+                )}
                 {isSelected && (
                   <div className="absolute inset-0 bg-accent/50" />
                 )}
