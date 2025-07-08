@@ -448,20 +448,42 @@ export class ChessGame {
 
   // AI Integration
   async getAIBestMove(difficulty: 'Easy' | 'Medium' | 'Hard'): Promise<string | null> {
-    const response = await suggestMove({ boardState: this.fen(), difficulty });
-    if(this.parseAlgebraicMove(response.move)) {
-        return response.move;
+    let attempts = 0;
+    while (attempts < 3) {
+      try {
+        const response = await suggestMove({ boardState: this.fen(), difficulty });
+        const parsedMove = this.parseAlgebraicMove(response.move);
+        
+        if (parsedMove) {
+          const piece = this.get(parsedMove.from);
+          if (piece && piece.color === this.turn) {
+            const validMoves = this.getValidMoves(parsedMove.from);
+            if (validMoves.some(m => m.row === parsedMove.to.row && m.col === parsedMove.to.col)) {
+              return response.move; // Valid move found
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`AI move suggestion attempt ${attempts + 1} failed:`, error);
+      }
+      attempts++;
+    }
+    console.error("AI failed to provide a valid move after 3 attempts.");
+    // As a fallback, return the first valid move for the AI
+    const allMoves = this.getAllValidMoves(this.turn);
+    if (allMoves.length > 0) {
+      return this.moveToString(allMoves[0]);
     }
     return null;
   }
 
-  async getAIBestMoveWithReason(difficulty: 'Easy' | 'Medium' | 'Hard', isForHint: boolean): Promise<{ move: string; reason: string }> {
+  async getAIBestMoveWithReason(difficulty: 'Easy' | 'Medium' | 'Hard'): Promise<{ move: string; reason: string }> {
       const boardState = this.fen();
       const currentTurn = boardState.split(' ')[1];
-      if ((currentTurn === 'w' && isForHint) || (currentTurn === 'b' && !isForHint)) {
+      if (currentTurn === 'w') { // Hint is for the white player
          return await suggestMove({ boardState, difficulty });
       }
-      return { move: '', reason: 'It is not the correct turn for a suggestion.' };
+      return { move: 'N/A', reason: "Hints are only available on your turn." };
   }
 
   async analyzePosition() {

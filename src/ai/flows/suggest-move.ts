@@ -18,7 +18,7 @@ const SuggestMoveInputSchema = z.object({
 export type SuggestMoveInput = z.infer<typeof SuggestMoveInputSchema>;
 
 const SuggestMoveOutputSchema = z.object({
-  move: z.string().describe('The suggested move in algebraic notation (e.g., e4, Nf3, Rd8).'),
+  move: z.string().describe('The suggested move in long algebraic notation (e.g., e2e4, e7e8q for promotion).'),
   reason: z.string().describe('The reasoning behind the suggested move.'),
 });
 export type SuggestMoveOutput = z.infer<typeof SuggestMoveOutputSchema>;
@@ -38,10 +38,7 @@ Difficulty: {{{difficulty}}}
 
 Consider the difficulty level when suggesting the move. A higher difficulty should result in a more strategic and complex move.
 
-Output the move in algebraic notation (e.g., e4, Nf3, Rd8) and provide a brief explanation of your reasoning behind the move.
-
-Move: {{move}}
-Reason: {{reason}}`,
+Output the move in long algebraic notation (e.g., e2e4 for a standard move, e7e8q for a promotion) and provide a brief explanation of your reasoning behind the move.`,
 });
 
 const suggestMoveFlow = ai.defineFlow(

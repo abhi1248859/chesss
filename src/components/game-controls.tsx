@@ -22,6 +22,7 @@ interface GameControlsProps {
   isLoading: { analysis: boolean; suggestion: boolean };
   fenHistory: string[];
   moveHistory: string[];
+  isAITurn?: boolean;
 }
 
 const GameControls: FC<GameControlsProps> = ({
@@ -37,6 +38,7 @@ const GameControls: FC<GameControlsProps> = ({
   isLoading,
   fenHistory,
   moveHistory,
+  isAITurn,
 }) => {
   const formattedMoveHistory = useMemo(() => {
     return moveHistory.reduce((acc: string[][], move, i) => {
@@ -57,17 +59,17 @@ const GameControls: FC<GameControlsProps> = ({
       </CardHeader>
       <CardContent className="flex-grow flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-4">
-          <Button onClick={onNewGame}>
+          <Button onClick={onNewGame} disabled={isAITurn}>
             <Wand2 className="mr-2 h-4 w-4" /> New Game
           </Button>
-          <Button onClick={onUndo} variant="outline" disabled={fenHistory.length < 3}>
+          <Button onClick={onUndo} variant="outline" disabled={fenHistory.length < 3 || isAITurn}>
             <RotateCcw className="mr-2 h-4 w-4" /> Undo
           </Button>
         </div>
         
         <div>
           <Label htmlFor="difficulty">Difficulty</Label>
-          <Select value={difficulty} onValueChange={onDifficultyChange}>
+          <Select value={difficulty} onValueChange={onDifficultyChange} disabled={isAITurn}>
             <SelectTrigger id="difficulty">
               <SelectValue placeholder="Select difficulty" />
             </SelectTrigger>
@@ -102,11 +104,11 @@ const GameControls: FC<GameControlsProps> = ({
         <div>
           <h3 className="font-semibold mb-2 text-sm">AI Assistance</h3>
           <div className="flex items-center gap-4">
-            <Button onClick={onAnalysis} className="w-full" variant="secondary" disabled={isLoading.analysis}>
+            <Button onClick={onAnalysis} className="w-full" variant="secondary" disabled={isLoading.analysis || isAITurn}>
               {isLoading.analysis ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
               Analyze
             </Button>
-            <Button onClick={onSuggestion} className="w-full" variant="secondary" disabled={isLoading.suggestion}>
+            <Button onClick={onSuggestion} className="w-full" variant="secondary" disabled={isLoading.suggestion || isAITurn}>
                {isLoading.suggestion ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Info className="mr-2 h-4 w-4" />}
               Hint
             </Button>

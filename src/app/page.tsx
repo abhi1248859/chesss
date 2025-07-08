@@ -102,7 +102,7 @@ export default function Home() {
   }, [isAITurn, makeAIMove]);
 
   const handleUndo = useCallback(() => {
-    if (fenHistory.length < 3) return; // Need at least start, player move, and AI move FENs
+    if (fenHistory.length < 3 || isAITurn) return; // Need at least start, player move, and AI move FENs
 
     const newFenHistory = fenHistory.slice(0, -2);
     const newMoveHistory = moveHistory.slice(0, -2);
@@ -114,9 +114,10 @@ export default function Home() {
     setIsAITurn(false);
     setSelectedSquare(null);
     setValidMoves([]);
-  }, [game, fenHistory, moveHistory]);
+  }, [game, fenHistory, moveHistory, isAITurn]);
 
   const handleAnalysis = useCallback(async () => {
+    if (isAITurn) return;
     setIsLoading(prev => ({ ...prev, analysis: true }));
     setAnalysis('');
     try {
@@ -128,13 +129,14 @@ export default function Home() {
     } finally {
       setIsLoading(prev => ({ ...prev, analysis: false }));
     }
-  }, [game]);
+  }, [game, isAITurn]);
 
   const handleSuggestion = useCallback(async () => {
+    if (isAITurn) return;
     setIsLoading(prev => ({ ...prev, suggestion: true }));
     setSuggestion(null);
     try {
-      const result = await game.getAIBestMoveWithReason(difficulty, true);
+      const result = await game.getAIBestMoveWithReason(difficulty);
       setSuggestion(result);
     } catch(error) {
       console.error(error);
@@ -142,7 +144,7 @@ export default function Home() {
     } finally {
       setIsLoading(prev => ({ ...prev, suggestion: false }));
     }
-  }, [game, difficulty]);
+  }, [game, difficulty, isAITurn]);
 
   const gameStatusText = useMemo(() => {
     if (game.gameOver) {
@@ -191,6 +193,7 @@ export default function Home() {
               isLoading={isLoading}
               fenHistory={fenHistory}
               moveHistory={moveHistory}
+              isAITurn={isAITurn}
             />
           </div>
         </div>
