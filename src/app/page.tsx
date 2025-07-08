@@ -5,7 +5,11 @@ import ChessBoard from '@/components/chess-board';
 import GameControls from '@/components/game-controls';
 import { ChessGame } from '@/lib/chess-logic';
 import type { Position } from '@/lib/chess-logic';
-import { Loader2 } from 'lucide-react';
+import { Loader2, LogIn, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { onAuthChange, signInWithGoogle, signOutUser } from '@/lib/auth';
+import type { User } from 'firebase/auth';
 
 export default function Home() {
   const [game, setGame] = useState(() => new ChessGame());
@@ -20,8 +24,24 @@ export default function Home() {
   const [suggestion, setSuggestion] = useState<{ move: string; reason: string } | null>(null);
   const [isLoading, setIsLoading] = useState({ analysis: false, suggestion: false });
   const [difficulty, setDifficulty] = useState<'Easy' | 'Medium' | 'Hard'>('Medium');
+  const [user, setUser] = useState<User | null>(null);
 
   const playerColor = 'w';
+
+  useEffect(() => {
+    const unsubscribe = onAuthChange((user) => {
+      setUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleSignIn = async () => {
+    await signInWithGoogle();
+  };
+
+  const handleSignOut = async () => {
+    await signOutUser();
+  };
 
   const handleNewGame = useCallback(() => {
     const newGame = new ChessGame();
@@ -158,7 +178,26 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 bg-background">
       <div className="w-full max-w-7xl mx-auto">
-        <header className="text-center mb-8">
+        <header className="text-center mb-8 relative">
+          <div className="absolute top-0 right-0">
+            {user ? (
+              <div className="flex items-center gap-4">
+                <Avatar>
+                  <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
+                  <AvatarFallback>{user.displayName?.charAt(0) ?? 'U'}</AvatarFallback>
+                </Avatar>
+                <Button onClick={handleSignOut} variant="outline">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <Button onClick={handleSignIn}>
+                <LogIn className="mr-2 h-4 w-4" />
+                Sign in with Google
+              </Button>
+            )}
+          </div>
           <h1 className="text-5xl font-bold text-foreground tracking-tighter">Tactical Intellect</h1>
           <p className="text-muted-foreground mt-2 font-sans">The ultimate chess challenge against a cunning AI.</p>
         </header>
