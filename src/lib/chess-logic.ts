@@ -447,11 +447,11 @@ export class ChessGame {
   }
 
   // AI Integration
-  async getAIBestMove(difficulty: 'Easy' | 'Medium' | 'Hard'): Promise<string | null> {
+  async getAIBestMove(powerLevel: number): Promise<string | null> {
     let attempts = 0;
     while (attempts < 3) {
       try {
-        const response = await suggestMove({ boardState: this.fen(), difficulty });
+        const response = await suggestMove({ boardState: this.fen(), powerLevel });
         const parsedMove = this.parseAlgebraicMove(response.move);
         
         if (parsedMove) {
@@ -477,11 +477,11 @@ export class ChessGame {
     return null;
   }
 
-  async getAIBestMoveWithReason(difficulty: 'Easy' | 'Medium' | 'Hard'): Promise<{ move: string; reason: string }> {
+  async getAIBestMoveWithReason(powerLevel: number): Promise<{ move: string; reason: string }> {
       const boardState = this.fen();
       const currentTurn = boardState.split(' ')[1];
       if (currentTurn === 'w') { // Hint is for the white player
-         return await suggestMove({ boardState, difficulty });
+         return await suggestMove({ boardState, powerLevel });
       }
       return { move: 'N/A', reason: "Hints are only available on your turn." };
   }

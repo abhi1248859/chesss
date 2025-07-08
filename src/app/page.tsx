@@ -23,7 +23,7 @@ export default function Home() {
   const [analysis, setAnalysis] = useState<string>('');
   const [suggestion, setSuggestion] = useState<{ move: string; reason: string } | null>(null);
   const [isLoading, setIsLoading] = useState({ analysis: false, suggestion: false });
-  const [difficulty, setDifficulty] = useState<'Easy' | 'Medium' | 'Hard'>('Medium');
+  const [difficulty, setDifficulty] = useState<number>(30);
   const [user, setUser] = useState<User | null>(null);
 
   const playerColor = 'w';

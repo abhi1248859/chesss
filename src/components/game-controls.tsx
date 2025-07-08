@@ -3,7 +3,7 @@
 import { FC, useMemo } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Slider } from './ui/slider';
 import { Label } from './ui/label';
 import { Separator } from './ui/separator';
 import { ScrollArea } from './ui/scroll-area';
@@ -11,8 +11,8 @@ import { BrainCircuit, RotateCcw, Search, Wand2, Loader2, Info, History } from '
 
 interface GameControlsProps {
   status: string;
-  difficulty: 'Easy' | 'Medium' | 'Hard';
-  onDifficultyChange: (value: 'Easy' | 'Medium' | 'Hard') => void;
+  difficulty: number;
+  onDifficultyChange: (value: number) => void;
   onNewGame: () => void;
   onUndo: () => void;
   onAnalysis: () => void;
@@ -24,6 +24,19 @@ interface GameControlsProps {
   moveHistory: string[];
   isAITurn?: boolean;
 }
+
+const getPowerLevelDescription = (powerLevel: number) => {
+    if (powerLevel <= 10) return 'Beginner';
+    if (powerLevel <= 20) return 'Casual';
+    if (powerLevel <= 30) return 'Intermediate';
+    if (powerLevel <= 40) return 'Good Player';
+    if (powerLevel <= 50) return 'Advanced';
+    if (powerLevel <= 60) return 'Tactical AI';
+    if (powerLevel <= 80) return 'Strong Engine';
+    if (powerLevel <= 99) return 'Brutal Engine';
+    return 'Full Power AI 🔥';
+}
+
 
 const GameControls: FC<GameControlsProps> = ({
   status,
@@ -67,18 +80,20 @@ const GameControls: FC<GameControlsProps> = ({
           </Button>
         </div>
         
-        <div>
-          <Label htmlFor="difficulty">Difficulty</Label>
-          <Select value={difficulty} onValueChange={onDifficultyChange} disabled={isAITurn}>
-            <SelectTrigger id="difficulty">
-              <SelectValue placeholder="Select difficulty" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Easy">Easy</SelectItem>
-              <SelectItem value="Medium">Medium</SelectItem>
-              <SelectItem value="Hard">Hard</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="space-y-3 pt-2">
+          <Label htmlFor="difficulty-slider" className="flex justify-between items-center">
+            <span>Difficulty: {getPowerLevelDescription(difficulty)}</span>
+            <span className="text-muted-foreground font-mono">{difficulty}/100</span>
+          </Label>
+          <Slider
+            id="difficulty-slider"
+            min={0}
+            max={100}
+            step={1}
+            value={[difficulty]}
+            onValueChange={(value) => onDifficultyChange(value[0])}
+            disabled={isAITurn}
+          />
         </div>
         
         <Separator />
