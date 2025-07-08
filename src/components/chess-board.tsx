@@ -41,7 +41,7 @@ const ChessBoard: FC<ChessBoardProps> = ({ board, onSquareClick, selectedSquare,
                 key={`${actualRowIndex}-${actualColIndex}`}
                 onClick={() => onSquareClick(pos)}
                 className={cn(
-                  'flex items-center justify-center relative',
+                  'flex items-center justify-center relative aspect-square',
                   isLightSquare ? 'bg-board-light-square' : 'bg-board-dark-square',
                   'cursor-pointer transition-colors duration-200'
                 )}
