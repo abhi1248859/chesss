@@ -13,6 +13,17 @@ const firebaseConfig: FirebaseOptions = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+// This check is crucial for Vercel builds. If the environment variables are not set,
+// the build will fail with a clear and helpful error message.
+if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
+  // In a build environment, this will stop the build and log the error.
+  // In a browser, it will show the error in the console.
+  throw new Error(
+    'Firebase config environment variables are not set. Please ensure you have a .env file with the correct values for local development, and that you have set them in your Vercel project settings for deployment.'
+  );
+}
+
+
 // Initialize Firebase
 // This check prevents re-initialization on hot-reloads
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
