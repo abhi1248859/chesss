@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /games/{gameId} {
+      // Allow any authenticated user to read game data.
+      // This is necessary for one user to find and join another's game.
+      allow read: if request.auth != null;
+
+      // Allow any authenticated user to create a game.
+      allow create: if request.auth != null;
+
+      // Allow updates only if the user is a player or is joining an empty slot.
+      allow update: if request.auth != null &&
+                      (
+                        // Allow if the user is already player 1 or player 2
+                        request.auth.uid == resource.data.player1.uid ||
+                        request.auth.uid == resource.data.player2.uid ||
+                        // Allow if the user is joining as player 2 into an empty slot
+                        (resource.data.player2 == null && request.resource.data.player2.uid == request.auth.uid)
+                      );
+    }
+  }
+}
