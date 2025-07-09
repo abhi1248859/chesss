@@ -25,9 +25,17 @@ export const signInWithGoogle = async () => {
     await signInWithRedirect(auth, provider);
   } catch (error: any) {
     console.error('Error starting sign-in redirect: ', error);
+    
+    let description = 'Could not start the sign-in process. Please try again.';
+    if (error.code === 'auth/unauthorized-domain') {
+      description = 'This website\'s domain is not authorized for sign-in. Please add it to your Firebase project\'s authentication settings.';
+    } else if (error.code) {
+      description = `An unexpected error occurred: ${error.message}`;
+    }
+
     toast({
       title: 'Authentication Error',
-      description: 'Could not start the sign-in process. Please try again.',
+      description: description,
       variant: 'destructive',
     });
   }
@@ -80,7 +88,7 @@ export const onAuthChange = (callback: (user: User | null) => void) => {
       console.error('Error from getRedirectResult: ', error);
       
       // Don't show a toast for user-cancelled actions.
-      if (error.code === 'auth/cancelled-popup-request') {
+      if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
           return;
       }
       
