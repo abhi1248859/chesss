@@ -8,7 +8,7 @@ import MultiplayerLobby from '@/components/multiplayer-lobby';
 import MultiplayerGame from '@/components/multiplayer-game';
 import { ChessGame } from '@/lib/chess-logic';
 import type { Position } from '@/lib/chess-logic';
-import { Loader2, LogIn, LogOut, Home } from 'lucide-react';
+import { Loader2, LogIn, LogOut, Home as HomeIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { onAuthChange, signInWithGoogle, signOutUser } from '@/lib/auth';
@@ -312,7 +312,7 @@ export default function Home() {
             <>
               <div className="absolute top-0 left-0">
                 <Button onClick={resetToMenu} variant="outline" size="sm">
-                  <Home className="mr-2" />
+                  <HomeIcon className="mr-2" />
                   Main Menu
                 </Button>
               </div>
