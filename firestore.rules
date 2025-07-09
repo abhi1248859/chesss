@@ -1,40 +1,29 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Rule for user-specific data (if any in the future)
+    // Allow users to read/write their own profile data (e.g., unlocked levels)
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
     // Rules for multiplayer games
     match /games/{gameId} {
-      // Allow any logged-in user to read any game. This is required
-      // for players to join and watch games.
+      // Any logged-in user can see game data. This is needed to check
+      // a game's status before attempting to join it.
       allow read: if request.auth != null;
 
-      // Allow a logged-in user to create a game, but only if they
-      // set themselves as player1.
-      allow create: if request.auth != null &&
-                       request.resource.data.player1.uid == request.auth.uid;
+      // A logged-in user can create a new game, but only if they set
+      // themselves as player 1.
+      allow create: if request.auth != null && request.resource.data.player1.uid == request.auth.uid;
 
-      // Allow updates only for joining or for players making a move on their turn.
+      // An update is allowed if a logged-in user is:
+      // 1. Joining an open game (player2 is null).
+      // 2. Already player1 in the game.
+      // 3. Already player2 in the game.
       allow update: if request.auth != null &&
-                       (
-                         // Scenario 1: Player 2 joins the game.
-                         (resource.data.player2 == null &&
-                          request.resource.data.player2.uid == request.auth.uid &&
-                          resource.data.player1.uid != request.auth.uid)
-                         ||
-                         // Scenario 2: Player 1 (white) makes a move on their turn.
-                         (resource.data.turn == 'w' &&
-                          resource.data.player1.uid == request.auth.uid)
-                         ||
-                         // Scenario 3: Player 2 (black) makes a move on their turn.
-                         (resource.data.turn == 'b' &&
-                          resource.data.player2.uid == request.auth.uid)
-                       );
+                      (resource.data.player2 == null ||
+                       request.auth.uid == resource.data.player1.uid ||
+                       request.auth.uid == resource.data.player2.uid);
     }
   }
 }
