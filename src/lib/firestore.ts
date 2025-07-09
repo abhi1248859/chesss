@@ -19,7 +19,11 @@ export async function createGame(user: User): Promise<string> {
         status: 'waiting', // waiting, active, finished
         turn: 'w',
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
+        rematch: {
+            offeredBy: null,
+            newGameId: null,
+        }
     });
     return gameId;
 }
@@ -41,4 +45,33 @@ export async function joinGame(gameId: string, user: User): Promise<boolean> {
         return true;
     }
     return false; // Game not found, already full, or user trying to join their own game
+}
+
+
+export async function offerRematch(gameId: string, userId: string): Promise<void> {
+    const gameRef = doc(db, 'games', gameId);
+    await updateDoc(gameRef, {
+        'rematch.offeredBy': userId,
+    });
+}
+
+export async function acceptRematch(gameId: string, oldGameData: any, acceptingUser: User): Promise<void> {
+    const opponent = oldGameData.player1.uid === acceptingUser.uid ? oldGameData.player2 : oldGameData.player1;
+
+    // The user accepting the rematch becomes player 1 in the new game (swapping colors)
+    const newGameId = await createGame(acceptingUser);
+    const newGameRef = doc(db, 'games', newGameId);
+
+    // Immediately add the opponent as player 2
+    await updateDoc(newGameRef, {
+        player2: opponent,
+        status: 'active',
+        updatedAt: serverTimestamp()
+    });
+
+    // Update old game to point to the new one, signaling both clients to switch
+    const oldGameRef = doc(db, 'games', gameId);
+    await updateDoc(oldGameRef, {
+        'rematch.newGameId': newGameId
+    });
 }

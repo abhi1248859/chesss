@@ -4,27 +4,31 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { FC } from 'react';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { offerRematch, acceptRematch } from '@/lib/firestore';
 import type { User } from 'firebase/auth';
 import { ChessGame } from '@/lib/chess-logic';
 import type { Position, PlayerColor } from '@/lib/chess-logic';
 import ChessBoard from '@/components/chess-board';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
-import { Loader2, Swords, Shield, XCircle, Trophy } from 'lucide-react';
+import { Loader2, Swords, Shield, XCircle, Trophy, RefreshCw } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
+import { Button } from './ui/button';
 
 interface MultiplayerGameProps {
   gameId: string;
   user: User;
+  onRematchAccepted: (newGameId: string) => void;
 }
 
-const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, user }) => {
+const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, user, onRematchAccepted }) => {
   const [gameData, setGameData] = useState<any>(null);
   const [game, setGame] = useState(() => new ChessGame());
   const [board, setBoard] = useState(game.getBoard());
   const [selectedSquare, setSelectedSquare] = useState<Position | null>(null);
   const [validMoves, setValidMoves] = useState<Position[]>([]);
   const [kingCheckPosition, setKingCheckPosition] = useState<Position | null>(null);
+  const [isOfferingRematch, setIsOfferingRematch] = useState(false);
 
   const playerColor: PlayerColor | null = useMemo(() => {
     if (!gameData) return null;
@@ -33,6 +37,7 @@ const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, user }) => {
     return null;
   }, [gameData, user.uid]);
 
+  // Effect to listen for game state changes from Firestore
   useEffect(() => {
     const gameRef = doc(db, 'games', gameId);
     const unsubscribe = onSnapshot(gameRef, (doc) => {
@@ -51,6 +56,15 @@ const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, user }) => {
     });
     return () => unsubscribe();
   }, [gameId, game]);
+
+  // Effect to handle rematch logic
+  useEffect(() => {
+    if (gameData?.rematch?.newGameId) {
+        onRematchAccepted(gameData.rematch.newGameId);
+        setIsOfferingRematch(false); // Reset state for new game
+    }
+  }, [gameData, onRematchAccepted]);
+
 
   const handleSquareClick = useCallback(async (pos: Position) => {
     if (!gameData || gameData.status !== 'active' || gameData.turn !== playerColor) return;
@@ -105,7 +119,7 @@ const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, user }) => {
 
   const gameStatusText = useMemo(() => {
     if (!gameData) return "Loading...";
-    if (game.gameOver) {
+    if (gameData.status === 'finished') {
         const winnerColor = game.turn === 'w' ? 'Black' : 'White';
         return game.isCheckmate ? `Checkmate! ${winnerColor} wins.` : "Stalemate. It's a draw.";
     }
@@ -118,7 +132,7 @@ const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, user }) => {
   }, [game, gameData, playerColor]);
 
   const PlayerInfo = ({ pData, color, isTurn, isWinner } : {pData: any, color: 'White' | 'Black', isTurn: boolean, isWinner?: boolean}) => (
-    <div className={`p-3 rounded-lg flex items-center gap-3 transition-all ${isTurn && !game.gameOver ? 'bg-primary/20 ring-2 ring-primary' : 'bg-muted/50'}`}>
+    <div className={`p-3 rounded-lg flex items-center gap-3 transition-all ${isTurn && gameData.status === 'active' ? 'bg-primary/20 ring-2 ring-primary' : 'bg-muted/50'}`}>
         <Avatar>
             <AvatarImage src={pData.photoURL} alt={pData.name} />
             <AvatarFallback>{pData.name.charAt(0)}</AvatarFallback>
@@ -128,9 +142,60 @@ const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, user }) => {
             <p className="text-sm text-muted-foreground">{color}</p>
         </div>
         {isWinner && <Trophy className="text-accent" />}
-        {isTurn && !game.gameOver && <Swords className="text-foreground animate-pulse" />}
+        {isTurn && gameData.status === 'active' && <Swords className="text-foreground animate-pulse" />}
     </div>
   );
+
+  const handleOfferRematch = async () => {
+    setIsOfferingRematch(true);
+    try {
+      await offerRematch(gameId, user.uid);
+    } catch (error) {
+      console.error("Error offering rematch:", error);
+      setIsOfferingRematch(false);
+    }
+  };
+
+  const handleAcceptRematch = async () => {
+    if (!gameData) return;
+    try {
+      await acceptRematch(gameId, gameData, user);
+    } catch (error) {
+      console.error("Error accepting rematch:", error);
+    }
+  };
+
+  const RematchControls = () => {
+    const offeredBy = gameData?.rematch?.offeredBy;
+
+    if (offeredBy === user.uid || isOfferingRematch) {
+      return (
+        <div className="text-center p-2 text-sm text-muted-foreground">
+          <Loader2 className="inline-block mr-2 h-4 w-4 animate-spin" />
+          Rematch offer sent. Waiting for opponent...
+        </div>
+      );
+    }
+
+    if (offeredBy && offeredBy !== user.uid) {
+      return (
+        <div className="text-center p-2 space-y-2">
+          <p className="text-sm font-semibold">Opponent wants a rematch!</p>
+          <Button onClick={handleAcceptRematch}>
+            <Swords className="mr-2 h-4 w-4" /> Accept Rematch
+          </Button>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="text-center p-2">
+        <Button onClick={handleOfferRematch} variant="outline">
+          <RefreshCw className="mr-2 h-4 w-4" /> Request Rematch
+        </Button>
+      </div>
+    );
+  };
 
   if (!gameData) {
     return (
@@ -151,7 +216,7 @@ const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, user }) => {
   }
 
   const isMyTurn = gameData.turn === playerColor;
-  const winner = game.gameOver ? (game.turn === 'w' ? gameData.player2 : gameData.player1) : null;
+  const winner = gameData.status === 'finished' && !game.isStalemate ? (game.turn === 'w' ? gameData.player2 : gameData.player1) : null;
   const isDraw = game.isStalemate;
 
   return (
@@ -194,6 +259,11 @@ const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, user }) => {
                  <div className="text-center font-bold text-lg text-accent">It's a Draw!</div>
                )}
             </CardContent>
+             {gameData.status === 'finished' && (
+              <CardFooter className="justify-center border-t pt-4">
+                <RematchControls />
+              </CardFooter>
+            )}
         </Card>
         <Card>
             <CardHeader>

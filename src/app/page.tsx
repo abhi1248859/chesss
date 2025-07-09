@@ -72,6 +72,10 @@ export default function Home() {
     setGameMode('friend-game');
   };
   
+  const handleRematchAccepted = useCallback((newGameId: string) => {
+    setMultiplayerGameId(newGameId);
+  }, []);
+
   const renderContent = () => {
     if (!user) {
       return (
@@ -93,7 +97,7 @@ export default function Home() {
         return <MultiplayerLobby user={user} onGameCreated={handleGameCreated} onGameJoined={handleGameJoined} />;
       case 'friend-game':
          if (!multiplayerGameId) return <p>Error: No game ID found.</p>;
-         return <MultiplayerGame gameId={multiplayerGameId} user={user} />;
+         return <MultiplayerGame gameId={multiplayerGameId} user={user} onRematchAccepted={handleRematchAccepted} />;
       case 'bot':
         return <BotGame initialDifficulty={difficulty} onBackToMenu={resetToMenu} />;
       default:
