@@ -10,8 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { onAuthChange, signInWithGoogle, signOutUser } from '@/lib/auth';
 import type { User } from 'firebase/auth';
-import { getUserProfile, unlockPremiumFeatures } from '@/lib/firestore';
-import { useToast } from '@/hooks/use-toast';
 
 export default function Home() {
   const [game, setGame] = useState(() => new ChessGame());
@@ -29,39 +27,12 @@ export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [kingCheckPosition, setKingCheckPosition] = useState<Position | null>(null);
   
-  const [maxUnlockedDifficulty, setMaxUnlockedDifficulty] = useState(50);
-  const { toast } = useToast();
-
   const playerColor = 'w';
 
   useEffect(() => {
-    const unsubscribe = onAuthChange(async (user) => {
-      setUser(user);
-      if (user) {
-        try {
-          const profile = await getUserProfile(user.uid);
-          if (profile) {
-            setMaxUnlockedDifficulty(profile.maxUnlockedDifficulty);
-            if (profile.maxUnlockedDifficulty > 50) {
-              toast({ title: "Premium unlocked!", description: "You can now access all difficulty levels." });
-            }
-          }
-        } catch (error) {
-          console.error("Failed to get user profile:", error);
-          toast({
-            title: "Database Connection Error",
-            description: "Could not connect to the database. Please ensure Firestore is enabled in your Firebase project.",
-            variant: "destructive",
-          });
-        }
-      } else {
-        // Reset for logged out users
-        setMaxUnlockedDifficulty(50);
-        setDifficulty(d => Math.min(d, 50));
-      }
-    });
+    const unsubscribe = onAuthChange(setUser);
     return () => unsubscribe();
-  }, [toast]);
+  }, []);
 
   const handleSignIn = async () => {
     await signInWithGoogle();
@@ -203,37 +174,9 @@ export default function Home() {
     }
   }, [game, difficulty, isAITurn]);
   
-  const handleDifficultyChange = useCallback(async (newDifficulty: number) => {
-    if (newDifficulty > maxUnlockedDifficulty) {
-      if (user) {
-        try {
-          await unlockPremiumFeatures(user.uid);
-          setMaxUnlockedDifficulty(100);
-          setDifficulty(newDifficulty);
-          toast({
-            title: 'Success!',
-            description: 'Premium levels unlocked. You can now challenge the full power AI.',
-          });
-        } catch (error) {
-          console.error("Failed to unlock premium features:", error);
-          toast({
-            title: 'Error',
-            description: 'There was a problem unlocking premium features.',
-            variant: 'destructive',
-          });
-        }
-      } else {
-        toast({
-          title: 'Sign in required',
-          description: 'Please sign in to unlock premium difficulty levels.',
-          variant: 'destructive',
-        });
-        handleSignIn();
-      }
-    } else {
-      setDifficulty(newDifficulty);
-    }
-  }, [maxUnlockedDifficulty, user, toast]);
+  const handleDifficultyChange = (newDifficulty: number) => {
+    setDifficulty(newDifficulty);
+  };
 
   const gameStatusText = useMemo(() => {
     if (game.gameOver) {
@@ -293,8 +236,6 @@ export default function Home() {
               status={gameStatusText}
               difficulty={difficulty}
               onDifficultyChange={handleDifficultyChange}
-              maxUnlockedDifficulty={maxUnlockedDifficulty}
-              isLoggedIn={!!user}
               onNewGame={handleNewGame}
               onUndo={handleUndo}
               onAnalysis={handleAnalysis}

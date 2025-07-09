@@ -7,7 +7,7 @@ import { Slider } from './ui/slider';
 import { Label } from './ui/label';
 import { Separator } from './ui/separator';
 import { ScrollArea } from './ui/scroll-area';
-import { BrainCircuit, RotateCcw, Search, Wand2, Loader2, Info, History, Lock } from 'lucide-react';
+import { BrainCircuit, RotateCcw, Search, Wand2, Loader2, Info, History } from 'lucide-react';
 
 interface GameControlsProps {
   status: string;
@@ -23,8 +23,6 @@ interface GameControlsProps {
   fenHistory: string[];
   moveHistory: string[];
   isAITurn?: boolean;
-  maxUnlockedDifficulty: number;
-  isLoggedIn: boolean;
 }
 
 const getPowerLevelLabel = (powerLevel: number) => {
@@ -54,8 +52,6 @@ const GameControls: FC<GameControlsProps> = ({
   fenHistory,
   moveHistory,
   isAITurn,
-  maxUnlockedDifficulty,
-  isLoggedIn,
 }) => {
   const formattedMoveHistory = useMemo(() => {
     return moveHistory.reduce((acc: string[][], move, i) => {
@@ -68,16 +64,7 @@ const GameControls: FC<GameControlsProps> = ({
     }, []);
   }, [moveHistory]);
   
-  const difficultyLabel = useMemo(() => {
-    const label = getPowerLevelLabel(difficulty);
-    if (difficulty > maxUnlockedDifficulty) {
-      if (!isLoggedIn) {
-        return <span className="flex items-center gap-1.5"><Lock className="w-3 h-3"/>Sign in to Unlock</span>;
-      }
-      return <span className="flex items-center gap-1.5"><Lock className="w-3 h-3"/>Click slider to Unlock</span>
-    }
-    return label;
-  }, [difficulty, maxUnlockedDifficulty, isLoggedIn]);
+  const difficultyLabel = getPowerLevelLabel(difficulty);
 
   return (
     <Card className="shadow-lg h-full flex flex-col">
