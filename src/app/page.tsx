@@ -5,7 +5,7 @@ import GameSetup from '@/components/game-setup';
 import MultiplayerLobby from '@/components/multiplayer-lobby';
 import MultiplayerGame from '@/components/multiplayer-game';
 import BotGame from '@/components/bot-game';
-import { LogIn, LogOut, Home as HomeIcon } from 'lucide-react';
+import { LogIn, LogOut, Home as HomeIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { onAuthChange, signInWithGoogle, signOutUser } from '@/lib/auth';
@@ -16,13 +16,17 @@ import { db } from '@/lib/firebase';
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
   const [difficulty, setDifficulty] = useState<number>(30);
   
   const [gameMode, setGameMode] = useState<'menu' | 'bot' | 'friend-lobby' | 'friend-game'>('menu');
   const [multiplayerGameId, setMultiplayerGameId] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthChange(setUser);
+    const unsubscribe = onAuthChange((user) => {
+      setUser(user);
+      setLoadingAuth(false);
+    });
     return () => unsubscribe();
   }, []);
   
@@ -41,6 +45,7 @@ export default function Home() {
 
 
   const handleSignIn = async () => {
+    setLoadingAuth(true);
     await signInWithGoogle();
   };
 
@@ -90,6 +95,15 @@ export default function Home() {
   }
 
   const renderContent = () => {
+    if (loadingAuth) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="text-muted-foreground">Loading...</p>
+        </div>
+      );
+    }
+
     if (!user) {
       return (
         <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-center">

@@ -1,7 +1,8 @@
 'use client';
 
 import {
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
@@ -17,32 +18,14 @@ export const signInWithGoogle = async () => {
     if (!auth) {
         throw new Error("Firebase Auth is not initialized.");
     }
-    const result = await signInWithPopup(auth, provider);
-    return result.user;
+    await signInWithRedirect(auth, provider);
   } catch (error: any) {
-    // If the user closes the popup, it's not a critical error.
-    // We can log it quietly and avoid showing a scary toast message.
-    if (error.code === 'auth/popup-closed-by-user') {
-      console.log('Sign-in cancelled by user.');
-      return null;
-    }
-
-    // For all other actual errors, log them and show a toast.
-    console.error('Error signing in with Google: ', error);
-    let description = 'Could not sign in. Please try again.';
-    
-    if (error.code === 'auth/unauthorized-domain') {
-      description = 'This app\'s domain is not authorized for sign-in. Please add it to the "Authorized domains" list in your Firebase project\'s Authentication settings.';
-    } else {
-      description = `An unexpected error occurred. (${error.code || 'Unknown error'})`;
-    }
-
+    console.error('Error starting sign-in redirect: ', error);
     toast({
       title: 'Authentication Error',
-      description: description,
+      description: 'Could not start the sign-in process. Please try again.',
       variant: 'destructive',
     });
-    return null;
   }
 };
 
@@ -67,5 +50,24 @@ export const onAuthChange = (callback: (user: User | null) => void) => {
         callback(null);
         return () => {};
     }
+    
+    // Check for redirect result when the app loads.
+    getRedirectResult(auth)
+      .catch((error: any) => {
+        // Handle Errors here. This is where errors from the redirect flow will be caught.
+        console.error('Error from redirect result: ', error);
+        let description = 'Could not complete sign-in. Please try again.';
+        if (error.code === 'auth/unauthorized-domain') {
+          description = 'This app\'s domain is not authorized for sign-in. Please check your Firebase project settings.';
+        } else {
+          description = `An unexpected error occurred. (${error.code || 'Unknown error'})`;
+        }
+        toast({
+          title: 'Authentication Error',
+          description: description,
+          variant: 'destructive',
+        });
+      });
+
     return onAuthStateChanged(auth, callback);
 };
