@@ -1,11 +1,8 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow any authenticated user to read/write to any user profile.
-    // For production, you can tighten this to `request.auth.uid == userId;`
     match /users/{userId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if request.auth.uid == userId;
     }
   }
 }
