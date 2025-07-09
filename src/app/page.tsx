@@ -220,15 +220,17 @@ export default function Home() {
     return `${game.turn === 'w' ? 'White' : 'Black'}'s Turn`;
   }, [game, fenHistory]);
   
-  const handleSelectMode = (mode: 'bot' | 'friend') => {
-    handleNewGame(); // Reset any existing game
-    if (mode === 'bot') {
-      setGameMode('bot');
-    } else {
-      setGameMode('friend-lobby');
-    }
+  const handleSelectBotGame = (newDifficulty: number) => {
+    handleNewGame();
+    setDifficulty(newDifficulty);
+    setGameMode('bot');
   };
 
+  const handleSelectFriendGame = () => {
+    handleNewGame();
+    setGameMode('friend-lobby');
+  };
+  
   const handleGameCreated = (gameId: string) => {
     setMultiplayerGameId(gameId);
   }
@@ -254,7 +256,7 @@ export default function Home() {
 
     switch (gameMode) {
       case 'menu':
-        return <GameSetup onSelectMode={handleSelectMode} />;
+        return <GameSetup onSelectBotGame={handleSelectBotGame} onSelectFriendGame={handleSelectFriendGame} />;
       case 'friend-lobby':
         return <MultiplayerLobby user={user} onGameCreated={handleGameCreated} onGameJoined={handleGameJoined} />;
       case 'friend-game':
