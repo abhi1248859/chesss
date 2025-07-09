@@ -7,7 +7,7 @@ import { Slider } from './ui/slider';
 import { Label } from './ui/label';
 import { Separator } from './ui/separator';
 import { ScrollArea } from './ui/scroll-area';
-import { BrainCircuit, RotateCcw, Search, Wand2, Loader2, Info, History } from 'lucide-react';
+import { BrainCircuit, RotateCcw, Search, Wand2, Loader2, Info, History, Home } from 'lucide-react';
 
 interface GameControlsProps {
   status: string;
@@ -23,6 +23,7 @@ interface GameControlsProps {
   fenHistory: string[];
   moveHistory: string[];
   isAITurn?: boolean;
+  onBackToMenu: () => void;
 }
 
 const getPowerLevelLabel = (powerLevel: number) => {
@@ -52,6 +53,7 @@ const GameControls: FC<GameControlsProps> = ({
   fenHistory,
   moveHistory,
   isAITurn,
+  onBackToMenu,
 }) => {
   const formattedMoveHistory = useMemo(() => {
     return moveHistory.reduce((acc: string[][], move, i) => {
@@ -69,13 +71,14 @@ const GameControls: FC<GameControlsProps> = ({
   return (
     <Card className="shadow-lg h-full flex flex-col">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><BrainCircuit /> Tactical Intellect</CardTitle>
-        <CardDescription>Status: {status}</CardDescription>
+        <CardTitle className="flex items-center gap-2"><BrainCircuit /> Game Status</CardTitle>
+        <CardDescription>{status}</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow flex flex-col gap-4">
-        <div className="grid grid-cols-2 gap-4">
+        
+        <div className="grid grid-cols-2 gap-2">
           <Button onClick={onNewGame} disabled={isAITurn}>
-            <Wand2 className="mr-2 h-4 w-4" /> New Game
+            <Wand2 className="mr-2 h-4 w-4" /> Reset Game
           </Button>
           <Button onClick={onUndo} variant="outline" disabled={fenHistory.length < 3 || isAITurn}>
             <RotateCcw className="mr-2 h-4 w-4" /> Undo
@@ -152,11 +155,6 @@ const GameControls: FC<GameControlsProps> = ({
             )}
         </ScrollArea>
       </CardContent>
-      <CardFooter>
-        <p className="text-xs text-muted-foreground text-center w-full">
-            Developed for a world-class chess experience.
-        </p>
-      </CardFooter>
     </Card>
   );
 };
