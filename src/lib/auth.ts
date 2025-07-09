@@ -20,14 +20,19 @@ export const signInWithGoogle = async () => {
     const result = await signInWithPopup(auth, provider);
     return result.user;
   } catch (error: any) {
+    // If the user closes the popup, it's not a critical error.
+    // We can log it quietly and avoid showing a scary toast message.
+    if (error.code === 'auth/popup-closed-by-user') {
+      console.log('Sign-in cancelled by user.');
+      return null;
+    }
+
+    // For all other actual errors, log them and show a toast.
     console.error('Error signing in with Google: ', error);
     let description = 'Could not sign in. Please try again.';
     
-    // Check for specific Firebase error codes
     if (error.code === 'auth/unauthorized-domain') {
       description = 'This app\'s domain is not authorized for sign-in. Please add it to the "Authorized domains" list in your Firebase project\'s Authentication settings.';
-    } else if (error.code === 'auth/popup-closed-by-user') {
-      description = 'Sign-in cancelled.';
     } else {
       description = `An unexpected error occurred. (${error.code || 'Unknown error'})`;
     }
