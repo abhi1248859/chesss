@@ -176,7 +176,7 @@ export default function BotGame({ initialDifficulty, onBackToMenu }: BotGameProp
   }, [game, fenHistory]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full items-start">
       <div className="lg:col-span-2 relative">
         <ChessBoard
           board={board}
@@ -193,7 +193,7 @@ export default function BotGame({ initialDifficulty, onBackToMenu }: BotGameProp
         )}
       </div>
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 w-full">
         <GameControls
           status={gameStatusText}
           difficulty={difficulty}

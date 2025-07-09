@@ -75,13 +75,26 @@ export default function Home() {
   const handleRematchAccepted = useCallback((newGameId: string) => {
     setMultiplayerGameId(newGameId);
   }, []);
+  
+  const getHeaderTitle = () => {
+    switch (gameMode) {
+      case 'bot':
+        return "Play vs. Bot";
+      case 'friend-game':
+        return "Play vs. Friend";
+      case 'friend-lobby':
+        return "Multiplayer Lobby";
+      default:
+        return null;
+    }
+  }
 
   const renderContent = () => {
     if (!user) {
       return (
-        <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
-            <h1 className="text-6xl font-bold text-foreground tracking-tighter">Tactical Intellect</h1>
-            <p className="text-muted-foreground font-sans max-w-md text-center">The ultimate chess challenge against cunning opponents. Sign in to begin.</p>
+        <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-center">
+            <h1 className="text-4xl sm:text-6xl font-bold text-foreground tracking-tighter">Tactical Intellect</h1>
+            <p className="text-muted-foreground font-sans max-w-xs sm:max-w-md">The ultimate chess challenge against cunning opponents. Sign in to begin.</p>
             <Button onClick={handleSignIn} size="lg">
                 <LogIn className="mr-2 h-5 w-5" />
                 Sign in with Google
@@ -107,39 +120,42 @@ export default function Home() {
 
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 bg-background">
+    <main className="flex min-h-screen flex-col items-center p-4 sm:p-8 bg-background">
       <div className="w-full max-w-7xl mx-auto">
-        <header className="text-center mb-8 relative h-12">
+        <header className="w-full flex justify-between items-center mb-6 sm:mb-8 h-12">
           {user && (
             <>
-              <div className="absolute top-0 left-0">
-                <Button onClick={resetToMenu} variant="outline" size="sm">
-                  <HomeIcon className="mr-2" />
-                  Main Menu
+              <div className="flex-1">
+                 {gameMode !== 'menu' && (
+                    <Button onClick={resetToMenu} variant="outline" size="icon" className="sm:hidden">
+                        <HomeIcon className="h-4 w-4" />
+                        <span className="sr-only">Main Menu</span>
+                    </Button>
+                 )}
+                 {gameMode !== 'menu' && (
+                    <Button onClick={resetToMenu} variant="outline" size="sm" className="hidden sm:flex">
+                        <HomeIcon className="mr-2 h-4 w-4" />
+                        Main Menu
+                    </Button>
+                 )}
+              </div>
+              <div className="flex-1 text-center">
+                 <h1 className="text-xl sm:text-3xl font-bold tracking-tighter">{getHeaderTitle()}</h1>
+              </div>
+              <div className="flex-1 flex justify-end items-center gap-2 sm:gap-4">
+                <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
+                  <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
+                  <AvatarFallback>{user.displayName?.charAt(0) ?? 'U'}</AvatarFallback>
+                </Avatar>
+                <Button onClick={handleSignOut} variant="outline" size="icon" className="sm:hidden">
+                    <LogOut className="h-4 w-4" />
+                    <span className="sr-only">Sign Out</span>
+                </Button>
+                 <Button onClick={handleSignOut} variant="outline" size="sm" className="hidden sm:flex">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
                 </Button>
               </div>
-              <div className="absolute top-0 right-0">
-                <div className="flex items-center gap-4">
-                  <Avatar>
-                    <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'} />
-                    <AvatarFallback>{user.displayName?.charAt(0) ?? 'U'}</AvatarFallback>
-                  </Avatar>
-                  <Button onClick={handleSignOut} variant="outline" size="sm">
-                    <LogOut className="mr-2" />
-                    Sign Out
-                  </Button>
-                </div>
-              </div>
-              {gameMode === 'bot' && (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2">
-                   <h1 className="text-4xl font-bold text-foreground tracking-tighter">Play vs. Bot</h1>
-                </div>
-              )}
-              {gameMode === 'friend-game' && (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2">
-                   <h1 className="text-4xl font-bold text-foreground tracking-tighter">Play vs. Friend</h1>
-                </div>
-              )}
             </>
           )}
         </header>

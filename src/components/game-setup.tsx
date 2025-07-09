@@ -34,7 +34,7 @@ const GameSetup: FC<GameSetupProps> = ({ onSelectBotGame, onSelectFriendGame }) 
 
   if (view === 'bot-setup') {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex items-center justify-center w-full">
         <Card className="w-full max-w-md text-center shadow-2xl animate-fade-in-up">
           <CardHeader>
              <div className="relative">
@@ -46,7 +46,7 @@ const GameSetup: FC<GameSetupProps> = ({ onSelectBotGame, onSelectFriendGame }) 
              </div>
           </CardHeader>
           <CardContent className="flex flex-col gap-4 p-6">
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {difficultyLevels.map((level) => (
                     <Button
                         key={level.name}

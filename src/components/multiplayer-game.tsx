@@ -220,7 +220,7 @@ const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, user, onRematchAcce
   const isDraw = game.isStalemate;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full items-start">
       <div className="lg:col-span-2 relative">
         <ChessBoard
           board={board}
@@ -237,7 +237,7 @@ const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, user, onRematchAcce
         )}
       </div>
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 w-full">
         <Card>
             <CardHeader>
                 <CardTitle className="flex justify-between items-center">

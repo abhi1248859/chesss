@@ -23,7 +23,7 @@ const ChessBoard: FC<ChessBoardProps> = ({ board, onSquareClick, selectedSquare,
   };
 
   return (
-    <div className="aspect-square w-full max-w-2xl mx-auto shadow-2xl rounded-lg overflow-hidden border-4 border-card">
+    <div className="aspect-square w-full max-w-2xl mx-auto shadow-2xl rounded-lg overflow-hidden border-2 sm:border-4 border-card">
       <div className="grid grid-cols-8 h-full">
         {boardRows.map((row, rowIndex) => {
           const actualRowIndex = isFlipped ? 7 - rowIndex : rowIndex;
