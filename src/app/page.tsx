@@ -11,7 +11,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { onAuthChange, signInWithGoogle, signOutUser } from '@/lib/auth';
 import type { User } from 'firebase/auth';
 import { getUserProfile, unlockPremiumFeatures } from '@/lib/firestore';
-import PaymentDialog from '@/components/payment-dialog';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Home() {
@@ -31,8 +30,6 @@ export default function Home() {
   const [kingCheckPosition, setKingCheckPosition] = useState<Position | null>(null);
   
   const [maxUnlockedDifficulty, setMaxUnlockedDifficulty] = useState(50);
-  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const [difficultyToUnlock, setDifficultyToUnlock] = useState<number | null>(null);
   const { toast } = useToast();
 
   const playerColor = 'w';
@@ -206,11 +203,25 @@ export default function Home() {
     }
   }, [game, difficulty, isAITurn]);
   
-  const handleDifficultyChange = useCallback((newDifficulty: number) => {
+  const handleDifficultyChange = useCallback(async (newDifficulty: number) => {
     if (newDifficulty > maxUnlockedDifficulty) {
       if (user) {
-        setDifficultyToUnlock(newDifficulty);
-        setIsPaymentDialogOpen(true);
+        try {
+          await unlockPremiumFeatures(user.uid);
+          setMaxUnlockedDifficulty(100);
+          setDifficulty(newDifficulty);
+          toast({
+            title: 'Success!',
+            description: 'Premium levels unlocked. You can now challenge the full power AI.',
+          });
+        } catch (error) {
+          console.error("Failed to unlock premium features:", error);
+          toast({
+            title: 'Error',
+            description: 'There was a problem unlocking premium features.',
+            variant: 'destructive',
+          });
+        }
       } else {
         toast({
           title: 'Sign in required',
@@ -223,31 +234,6 @@ export default function Home() {
       setDifficulty(newDifficulty);
     }
   }, [maxUnlockedDifficulty, user, toast]);
-
-  const handleConfirmPayment = useCallback(async () => {
-    if (!user) return;
-    try {
-      await unlockPremiumFeatures(user.uid);
-      setMaxUnlockedDifficulty(100);
-      if (difficultyToUnlock) {
-        setDifficulty(difficultyToUnlock);
-      }
-      toast({
-        title: 'Success!',
-        description: 'Premium levels unlocked. You can now challenge the full power AI.',
-      });
-    } catch (error) {
-      console.error("Failed to unlock premium features:", error);
-      toast({
-        title: 'Error',
-        description: 'There was a problem unlocking premium features.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsPaymentDialogOpen(false);
-      setDifficultyToUnlock(null);
-    }
-  }, [user, difficultyToUnlock, toast]);
 
   const gameStatusText = useMemo(() => {
     if (game.gameOver) {
@@ -323,11 +309,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-       <PaymentDialog
-        open={isPaymentDialogOpen}
-        onOpenChange={setIsPaymentDialogOpen}
-        onConfirmPayment={handleConfirmPayment}
-      />
     </main>
   );
 }

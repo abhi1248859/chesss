@@ -23,11 +23,5 @@ export const unlockPremiumFeatures = async (uid: string): Promise<void> => {
   const userDocRef = doc(db, 'users', uid);
   await updateDoc(userDocRef, {
     maxUnlockedDifficulty: 100,
-    paymentStatus: {
-        paid: true,
-        amount: 10,
-        method: "UPI",
-        time: new Date().toISOString()
-    }
   });
 };

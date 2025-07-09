@@ -74,7 +74,7 @@ const GameControls: FC<GameControlsProps> = ({
       if (!isLoggedIn) {
         return <span className="flex items-center gap-1.5"><Lock className="w-3 h-3"/>Sign in to Unlock</span>;
       }
-      return <span className="flex items-center gap-1.5"><Lock className="w-3 h-3"/>Locked (Unlock for ₹10)</span>
+      return <span className="flex items-center gap-1.5"><Lock className="w-3 h-3"/>Click slider to Unlock</span>
     }
     return label;
   }, [difficulty, maxUnlockedDifficulty, isLoggedIn]);
