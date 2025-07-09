@@ -21,9 +21,20 @@ export const signInWithGoogle = async () => {
     return result.user;
   } catch (error: any) {
     console.error('Error signing in with Google: ', error);
+    let description = 'Could not sign in. Please try again.';
+    
+    // Check for specific Firebase error codes
+    if (error.code === 'auth/unauthorized-domain') {
+      description = 'This app\'s domain is not authorized for sign-in. Please add it to the "Authorized domains" list in your Firebase project\'s Authentication settings.';
+    } else if (error.code === 'auth/popup-closed-by-user') {
+      description = 'Sign-in cancelled.';
+    } else {
+      description = `An unexpected error occurred. (${error.code || 'Unknown error'})`;
+    }
+
     toast({
       title: 'Authentication Error',
-      description: 'Could not sign in. Please ensure your Firebase project is configured correctly and Google Sign-In is enabled.',
+      description: description,
       variant: 'destructive',
     });
     return null;
