@@ -4,20 +4,19 @@ import { initializeApp, getApps, getApp, type FirebaseOptions } from 'firebase/a
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
+// Hardcoded Firebase configuration for the 'tactical-intellect' project
 const firebaseConfig: FirebaseOptions = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "AIzaSyAruLbgL3dZk4roy9KkDbTEOks4Mv0u_-M",
+  authDomain: "tactical-intellect.firebaseapp.com",
+  projectId: "tactical-intellect",
+  storageBucket: "tactical-intellect.appspot.com",
+  messagingSenderId: "1022978117758",
+  appId: "1:1022978117758:web:a54fb34c8db511c81b082f"
 };
 
-const isConfigured = firebaseConfig.apiKey && firebaseConfig.projectId;
-
 // Initialize Firebase
-const app = isConfigured && !getApps().length ? initializeApp(firebaseConfig) : (getApps().length > 0 ? getApp() : null);
-const auth = app ? getAuth(app) : null;
-const db = app ? getFirestore(app) : null;
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 export { app, auth, db };
