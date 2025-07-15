@@ -3,25 +3,18 @@ import { db } from './firebase';
 import { nanoid } from 'nanoid';
 import type { User } from 'firebase/auth';
 
-// This function now creates a default user object, so it doesn't need a logged-in user.
-export async function createGame(): Promise<string> {
+export async function createGame(user: User): Promise<string> {
     const gameId = nanoid(8);
     const gameRef = doc(db, 'games', gameId);
     
-    const user = {
-        uid: `guest_${nanoid(10)}`,
-        displayName: 'Guest Player',
-        photoURL: ''
-    };
-
     await setDoc(gameRef, {
         gameId,
         fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
         moveHistory: [],
         player1: {
             uid: user.uid,
-            name: user.displayName,
-            photoURL: user.photoURL
+            name: user.displayName || 'Anonymous Player',
+            photoURL: user.photoURL || `https://placehold.co/40x40.png`
         },
         player2: null,
         status: 'waiting',
@@ -36,22 +29,16 @@ export async function createGame(): Promise<string> {
     return gameId;
 }
 
-export async function joinGame(gameId: string): Promise<boolean> {
+export async function joinGame(gameId: string, user: User): Promise<boolean> {
     const gameRef = doc(db, 'games', gameId);
     const gameSnap = await getDoc(gameRef);
-
-    const user = {
-        uid: `guest_${nanoid(10)}`,
-        displayName: 'Guest Player 2',
-        photoURL: ''
-    };
 
     if (gameSnap.exists() && !gameSnap.data().player2) {
         await updateDoc(gameRef, {
             player2: {
                 uid: user.uid,
-                name: user.displayName,
-                photoURL: user.photoURL
+                name: user.displayName || 'Anonymous Player 2',
+                photoURL: user.photoURL || `https://placehold.co/40x40.png`
             },
             status: 'active',
             updatedAt: serverTimestamp()

@@ -13,17 +13,12 @@ import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Loader2, Swords, Trophy, RefreshCw } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
+import type { User } from 'firebase/auth';
 
-// Define a simple user type for guest players
-interface GuestUser {
-  uid: string;
-  displayName?: string | null;
-  photoURL?: string | null;
-}
 
 interface MultiplayerGameProps {
   gameId: string;
-  user: GuestUser; // Use the guest user type
+  user: User;
   onRematchAccepted: (newGameId: string) => void;
 }
 
@@ -36,9 +31,6 @@ const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, user, onRematchAcce
   const [kingCheckPosition, setKingCheckPosition] = useState<Position | null>(null);
   const [isOfferingRematch, setIsOfferingRematch] = useState(false);
 
-  // The concept of a single "playerColor" is complex without auth.
-  // We'll use the turn data from Firestore as the primary source of truth.
-  // The 'user' prop helps in determining if a rematch can be offered/accepted.
   const playerColor: PlayerColor | null = useMemo(() => {
     if (!gameData || !user) return null;
     if (gameData.player1.uid === user.uid) return 'w';

@@ -8,23 +8,28 @@ import { Label } from './ui/label';
 import { createGame, joinGame } from '@/lib/firestore';
 import { Loader2, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import type { User } from 'firebase/auth';
 
 interface MultiplayerLobbyProps {
+  user: User;
   onGameCreated: (gameId: string) => void;
   onGameJoined: (gameId: string) => void;
 }
 
-const MultiplayerLobby: FC<MultiplayerLobbyProps> = ({ onGameCreated, onGameJoined }) => {
+const MultiplayerLobby: FC<MultiplayerLobbyProps> = ({ user, onGameCreated, onGameJoined }) => {
   const [joinCode, setJoinCode] = useState('');
   const [createdGameId, setCreatedGameId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState({ create: false, join: false });
   const { toast } = useToast();
 
   const handleCreateGame = async () => {
+    if (!user) {
+        toast({ title: "Error", description: "You must be authenticated to create a game.", variant: "destructive" });
+        return;
+    }
     setIsLoading(prev => ({ ...prev, create: true }));
     try {
-      // The user object is no longer needed here
-      const newGameId = await createGame();
+      const newGameId = await createGame(user);
       setCreatedGameId(newGameId);
       onGameCreated(newGameId);
     } catch (error) {
@@ -36,14 +41,17 @@ const MultiplayerLobby: FC<MultiplayerLobbyProps> = ({ onGameCreated, onGameJoin
   };
 
   const handleJoinGame = async () => {
+    if (!user) {
+        toast({ title: "Error", description: "You must be authenticated to join a game.", variant: "destructive" });
+        return;
+    }
     if (!joinCode) {
       toast({ title: "Error", description: "Please enter a game code.", variant: "destructive" });
       return;
     }
     setIsLoading(prev => ({ ...prev, join: true }));
     try {
-      // The user object is no longer needed here
-      const success = await joinGame(joinCode.trim());
+      const success = await joinGame(joinCode.trim(), user);
       if (success) {
         toast({ title: "Success!", description: "Joining game..." });
         onGameJoined(joinCode.trim());

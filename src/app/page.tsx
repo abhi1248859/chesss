@@ -9,47 +9,47 @@ import { Home as HomeIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 
 export default function Home() {
   const [difficulty, setDifficulty] = useState<number>(30);
   
   const [gameMode, setGameMode] = useState<'menu' | 'bot' | 'friend-lobby' | 'friend-game'>('menu');
   const [multiplayerGameId, setMultiplayerGameId] = useState<string | null>(null);
-  const [playerInfo, setPlayerInfo] = useState<{uid: string, color: 'w' | 'b'} | null>(null);
+  const [user, setUser] = useState<any>(null);
 
-  // This is a mock user object. Multiplayer will not work without real authentication.
-  // This is a placeholder to prevent the app from crashing.
-  const mockUser = {
-    uid: 'local-player',
-    displayName: 'Guest',
-    photoURL: '',
-  };
+  // Authenticate user anonymously on component mount
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+      } else {
+        signInAnonymously(auth).catch((error) => {
+          console.error("Anonymous sign-in failed:", error);
+        });
+      }
+    });
+    return () => unsubscribe();
+  }, []);
   
   // Effect to automatically start multiplayer game when opponent joins
   useEffect(() => {
-    if (gameMode === 'friend-lobby' && multiplayerGameId) {
+    if (gameMode === 'friend-lobby' && multiplayerGameId && user) {
       const unsub = onSnapshot(doc(db, "games", multiplayerGameId), (doc) => {
         const gameData = doc.data();
-        if (gameData?.status === 'active') {
-          // Determine if we are player 1 or 2
-          if (gameData.player1.uid === playerInfo?.uid) {
-            setPlayerInfo(prev => ({...prev!, color: 'w'}));
-          } else {
-            setPlayerInfo({uid: gameData.player2.uid, color: 'b'});
-          }
+        if (gameData?.status === 'active' && gameData.player2) {
           setGameMode('friend-game');
         }
       });
       return () => unsub();
     }
-  }, [gameMode, multiplayerGameId, playerInfo?.uid]);
+  }, [gameMode, multiplayerGameId, user]);
 
 
   const resetToMenu = useCallback(() => {
     setGameMode('menu');
     setMultiplayerGameId(null);
-    setPlayerInfo(null);
   }, []);
 
   const handleSelectBotGame = (newDifficulty: number) => {
@@ -88,15 +88,17 @@ export default function Home() {
   }
 
   const renderContent = () => {
+    if (!user) {
+        return <p>Authenticating...</p>
+    }
     switch (gameMode) {
       case 'menu':
         return <GameSetup onSelectBotGame={handleSelectBotGame} onSelectFriendGame={handleSelectFriendGame} />;
       case 'friend-lobby':
-        return <MultiplayerLobby onGameCreated={handleGameCreated} onGameJoined={handleGameJoined} />;
+        return <MultiplayerLobby user={user} onGameCreated={handleGameCreated} onGameJoined={handleGameJoined} />;
       case 'friend-game':
          if (!multiplayerGameId) return <p>Error: No game ID found.</p>;
-         // Pass mockUser for now, as real user info is not available without auth
-         return <MultiplayerGame gameId={multiplayerGameId} user={mockUser} onRematchAccepted={handleRematchAccepted} />;
+         return <MultiplayerGame gameId={multiplayerGameId} user={user} onRematchAccepted={handleRematchAccepted} />;
       case 'bot':
         return <BotGame initialDifficulty={difficulty} onBackToMenu={resetToMenu} />;
       default:
