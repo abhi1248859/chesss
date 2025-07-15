@@ -1,0 +1,3 @@
+# This is a placeholder ads.txt file.
+# You need to replace pub-0000000000000000 with your own publisher ID from your ad network (e.g., Google AdSense).
+google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0
