@@ -5,18 +5,20 @@ import GameSetup from '@/components/game-setup';
 import MultiplayerLobby from '@/components/multiplayer-lobby';
 import MultiplayerGame from '@/components/multiplayer-game';
 import BotGame from '@/components/bot-game';
+import PassAndPlayGame from '@/components/pass-and-play-game';
 import { Home as HomeIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, signInAnonymously, onAuthStateChanged, type User } from 'firebase/auth';
 
 export default function Home() {
   const [difficulty, setDifficulty] = useState<number>(30);
   
-  const [gameMode, setGameMode] = useState<'menu' | 'bot' | 'friend-lobby' | 'friend-game'>('menu');
+  const [gameMode, setGameMode] = useState<'menu' | 'bot' | 'pass-play' | 'friend-lobby' | 'friend-game'>('menu');
   const [multiplayerGameId, setMultiplayerGameId] = useState<string | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
   // Authenticate user anonymously on component mount
   useEffect(() => {
@@ -25,10 +27,12 @@ export default function Home() {
       if (currentUser) {
         setUser(currentUser);
       } else {
+        // Try to sign in anonymously, but don't block if it fails
         signInAnonymously(auth).catch((error) => {
-          console.error("Anonymous sign-in failed:", error);
+          console.error("Anonymous sign-in failed. Multiplayer mode may not work.", error);
         });
       }
+      setAuthInitialized(true);
     });
     return () => unsubscribe();
   }, []);
@@ -56,9 +60,18 @@ export default function Home() {
     setDifficulty(newDifficulty);
     setGameMode('bot');
   };
+  
+  const handleSelectPassAndPlay = () => {
+    setGameMode('pass-play');
+  };
 
   const handleSelectFriendGame = () => {
-    setGameMode('friend-lobby');
+    if (user) {
+      setGameMode('friend-lobby');
+    } else {
+      console.error("Multiplayer requires user to be authenticated.");
+      // Optionally, show a toast or alert to the user
+    }
   };
   
   const handleGameCreated = (gameId: string) => {
@@ -78,6 +91,8 @@ export default function Home() {
     switch (gameMode) {
       case 'bot':
         return "Play vs. Bot";
+      case 'pass-play':
+        return "Pass & Play";
       case 'friend-game':
         return "Play vs. Friend";
       case 'friend-lobby':
@@ -88,21 +103,24 @@ export default function Home() {
   }
 
   const renderContent = () => {
-    if (!user) {
-        return <p>Authenticating...</p>
+    if (!authInitialized) {
+        return <p>Initializing...</p>
     }
     switch (gameMode) {
       case 'menu':
-        return <GameSetup onSelectBotGame={handleSelectBotGame} onSelectFriendGame={handleSelectFriendGame} />;
+        return <GameSetup onSelectBotGame={handleSelectBotGame} onSelectFriendGame={handleSelectFriendGame} onSelectPassAndPlay={handleSelectPassAndPlay} />;
+      case 'pass-play':
+        return <PassAndPlayGame onBackToMenu={resetToMenu} />;
       case 'friend-lobby':
-        return <MultiplayerLobby user={user} onGameCreated={handleGameCreated} onGameJoined={handleGameJoined} />;
+        // The 'user' object is now guaranteed to be non-null by `handleSelectFriendGame`
+        return <MultiplayerLobby user={user!} onGameCreated={handleGameCreated} onGameJoined={handleGameJoined} />;
       case 'friend-game':
-         if (!multiplayerGameId) return <p>Error: No game ID found.</p>;
+         if (!multiplayerGameId || !user) return <p>Error: No game ID found or user not authenticated.</p>;
          return <MultiplayerGame gameId={multiplayerGameId} user={user} onRematchAccepted={handleRematchAccepted} />;
       case 'bot':
         return <BotGame initialDifficulty={difficulty} onBackToMenu={resetToMenu} />;
       default:
-        return <GameSetup onSelectBotGame={handleSelectBotGame} onSelectFriendGame={handleSelectFriendGame} />;
+        return <GameSetup onSelectBotGame={handleSelectBotGame} onSelectFriendGame={handleSelectFriendGame} onSelectPassAndPlay={handleSelectPassAndPlay} />;
     }
   };
 
