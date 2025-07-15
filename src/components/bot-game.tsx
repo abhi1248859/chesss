@@ -41,6 +41,7 @@ export default function BotGame({ initialDifficulty, onBackToMenu }: BotGameProp
     setIsAITurn(false);
     setAnalysis('');
     setSuggestion(null);
+    setKingCheckPosition(null);
   }, []);
 
   const handleSquareClick = useCallback((pos: Position) => {
@@ -51,11 +52,17 @@ export default function BotGame({ initialDifficulty, onBackToMenu }: BotGameProp
       const moveSan = game.moveToString(move);
       
       if (game.move(move)) {
+        const newFen = game.fen();
         setBoard(game.getBoard());
-        setFenHistory(prev => [...prev, game.fen()]);
+        setFenHistory(prev => [...prev, newFen]);
         setMoveHistory(prev => [...prev, moveSan]);
         setSelectedSquare(null);
         setValidMoves([]);
+        if (game.isCheck) {
+            setKingCheckPosition(game.findKing(game.turn));
+        } else {
+            setKingCheckPosition(null);
+        }
         if (!game.gameOver) {
           setIsAITurn(true);
         }
@@ -85,9 +92,15 @@ export default function BotGame({ initialDifficulty, onBackToMenu }: BotGameProp
     try {
       const aiMoveSan = await game.getAIBestMove(difficulty);
       if (aiMoveSan && game.move(aiMoveSan)) {
+        const newFen = game.fen();
         setBoard(game.getBoard());
-        setFenHistory(prev => [...prev, game.fen()]);
+        setFenHistory(prev => [...prev, newFen]);
         setMoveHistory(prev => [...prev, aiMoveSan]);
+         if (game.isCheck) {
+            setKingCheckPosition(game.findKing(game.turn));
+        } else {
+            setKingCheckPosition(null);
+        }
       } else {
         console.error("AI suggested an invalid or null move:", aiMoveSan);
       }
@@ -100,24 +113,13 @@ export default function BotGame({ initialDifficulty, onBackToMenu }: BotGameProp
   }, [isAITurn, game, difficulty]);
 
   useEffect(() => {
-    if (isAITurn) {
+    if (isAITurn && !game.gameOver) {
       const timer = setTimeout(() => {
         makeAIMove();
-      }, 500);
+      }, 500); // A small delay to make AI's move feel more natural
       return () => clearTimeout(timer);
     }
-  }, [isAITurn, makeAIMove]);
-
-  useEffect(() => {
-    const currentFen = fenHistory[fenHistory.length - 1];
-    game.load(currentFen);
-    if (game.isCheck) {
-        const kingPos = game.findKing(game.turn);
-        setKingCheckPosition(kingPos);
-    } else {
-        setKingCheckPosition(null);
-    }
-  }, [fenHistory, game]);
+  }, [isAITurn, game.gameOver, makeAIMove]);
 
   const handleUndo = useCallback(() => {
     if (fenHistory.length < 3 || isAITurn) return; // Need at least start, player move, and AI move FENs
@@ -132,12 +134,18 @@ export default function BotGame({ initialDifficulty, onBackToMenu }: BotGameProp
     setIsAITurn(false);
     setSelectedSquare(null);
     setValidMoves([]);
+    if (game.isCheck) {
+        setKingCheckPosition(game.findKing(game.turn));
+    } else {
+        setKingCheckPosition(null);
+    }
   }, [game, fenHistory, moveHistory, isAITurn]);
 
   const handleAnalysis = useCallback(async () => {
     if (isAITurn) return;
     setIsLoading(prev => ({ ...prev, analysis: true }));
     setAnalysis('');
+    setSuggestion(null);
     try {
       const result = await game.analyzePosition();
       setAnalysis(result.analysis);
@@ -153,6 +161,7 @@ export default function BotGame({ initialDifficulty, onBackToMenu }: BotGameProp
     if (isAITurn) return;
     setIsLoading(prev => ({ ...prev, suggestion: true }));
     setSuggestion(null);
+    setAnalysis('');
     try {
       const result = await game.getAIBestMoveWithReason(difficulty);
       setSuggestion(result);
@@ -173,13 +182,13 @@ export default function BotGame({ initialDifficulty, onBackToMenu }: BotGameProp
       return game.isCheckmate ? `Checkmate! ${game.turn === 'w' ? 'Black' : 'White'} wins.` : "Stalemate.";
     }
     if (game.isCheck) return "Check!";
-    return `${game.turn === 'w' ? 'White' : 'Black'}'s Turn`;
-  }, [game, fenHistory]);
+    return `${game.turn === 'w' ? 'Your' : "Bot's"} Turn`;
+  }, [game, fenHistory]); // Re-evaluate based on FEN history changes
 
   const winner = useMemo(() => {
     if (!game.gameOver) return null;
     if (game.isCheckmate) {
-        return game.turn === 'b' ? 'You' : 'Bot'; // if it's black's turn to move and they are checkmated, white wins.
+        return game.turn === 'b' ? 'You' : 'Bot'; // if it's black's turn to move and they are checkmated, white (You) wins.
     }
     return 'draw';
   }, [game.gameOver, game.isCheckmate, game.turn]);

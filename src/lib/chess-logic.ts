@@ -395,16 +395,14 @@ export class ChessGame {
       const D = [[-1,-1], [-1,0], [-1,1], [0,-1], [0,1], [1,-1], [1,0], [1,1]];
       D.forEach(([dr, dc]) => addMove(row + dr, col + dc));
       // Castling
-      if (!forAttackCheck) {
-        if (!this.isKingInCheck(color)) {
-            // Kingside
-            if (this.castlingRights[color].k && !this.get({row, col: 5}) && !this.get({row, col: 6}) && !this.isSquareAttacked({row, col: 5}, color === 'w' ? 'b' : 'w') && !this.isSquareAttacked({row, col: 6}, color === 'w' ? 'b' : 'w')) {
-                moves.push({row, col: 6});
-            }
-            // Queenside
-            if (this.castlingRights[color].q && !this.get({row, col: 3}) && !this.get({row, col: 2}) && !this.get({row, col: 1}) && !this.isSquareAttacked({row, col: 3}, color === 'w' ? 'b' : 'w') && !this.isSquareAttacked({row, col: 2}, color === 'w' ? 'b' : 'w')) {
-                moves.push({row, col: 2});
-            }
+      if (!forAttackCheck && !this.isKingInCheck(color)) {
+        // Kingside
+        if (this.castlingRights[color].k && !this.get({row, col: 5}) && !this.get({row, col: 6}) && !this.isSquareAttacked({row, col: 5}, color === 'w' ? 'b' : 'w') && !this.isSquareAttacked({row, col: 6}, color === 'w' ? 'b' : 'w')) {
+            moves.push({row, col: 6});
+        }
+        // Queenside
+        if (this.castlingRights[color].q && !this.get({row, col: 3}) && !this.get({row, col: 2}) && !this.get({row, col: 1}) && !this.isSquareAttacked({row, col: 3}, color === 'w' ? 'b' : 'w') && !this.isSquareAttacked({row, col: 2}, color === 'w' ? 'b' : 'w')) {
+            moves.push({row, col: 2});
         }
       }
     }
@@ -472,7 +470,8 @@ export class ChessGame {
     // As a fallback, return the first valid move for the AI
     const allMoves = this.getAllValidMoves(this.turn);
     if (allMoves.length > 0) {
-      return this.moveToString(allMoves[0]);
+      const randomIndex = Math.floor(Math.random() * allMoves.length);
+      return this.moveToString(allMoves[randomIndex]);
     }
     return null;
   }
@@ -480,10 +479,10 @@ export class ChessGame {
   async getAIBestMoveWithReason(powerLevel: number): Promise<{ move: string; reason: string }> {
       const boardState = this.fen();
       const currentTurn = boardState.split(' ')[1];
-      if (currentTurn === 'w') { // Hint is for the white player
-         return await suggestMove({ boardState, powerLevel });
+      if (currentTurn !== 'w') { // Hint is for the white player
+        return { move: 'N/A', reason: "Hints are only available on your turn." };
       }
-      return { move: 'N/A', reason: "Hints are only available on your turn." };
+      return await suggestMove({ boardState, powerLevel });
   }
 
   async analyzePosition() {
