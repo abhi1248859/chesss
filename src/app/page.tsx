@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
@@ -11,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getAuth, signInAnonymously, onAuthStateChanged, type User } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Home() {
   const [difficulty, setDifficulty] = useState<number>(30);
@@ -19,6 +21,7 @@ export default function Home() {
   const [multiplayerGameId, setMultiplayerGameId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
+  const { toast } = useToast();
 
   // Authenticate user anonymously on component mount
   useEffect(() => {
@@ -26,16 +29,35 @@ export default function Home() {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
+        setAuthInitialized(true);
       } else {
-        // Try to sign in anonymously, but don't block if it fails
-        signInAnonymously(auth).catch((error) => {
-          console.error("Anonymous sign-in failed. Multiplayer mode may not work.", error);
+        // Try to sign in anonymously
+        signInAnonymously(auth)
+          .then(() => {
+             setAuthInitialized(true);
+          })
+          .catch((error) => {
+            console.error("Anonymous sign-in failed:", error);
+            if (error.code === 'auth/admin-restricted-operation') {
+                 toast({
+                    title: "Multiplayer Disabled",
+                    description: "Please enable Anonymous Sign-In in your Firebase Console (Authentication > Sign-in method) to play online.",
+                    variant: "destructive",
+                    duration: 10000,
+                 });
+            } else {
+                 toast({
+                    title: "Authentication Error",
+                    description: "Could not sign-in to play online. Check console for details.",
+                    variant: "destructive",
+                 });
+            }
+            setAuthInitialized(true); // Still allow app to load for offline modes
         });
       }
-      setAuthInitialized(true);
     });
     return () => unsubscribe();
-  }, []);
+  }, [toast]);
   
   // Effect to automatically start multiplayer game when opponent joins
   useEffect(() => {
@@ -69,8 +91,11 @@ export default function Home() {
     if (user) {
       setGameMode('friend-lobby');
     } else {
-      console.error("Multiplayer requires user to be authenticated.");
-      // Optionally, show a toast or alert to the user
+      toast({
+        title: "Login Required",
+        description: "Authentication is required for multiplayer. Please wait a moment and try again, or check if Anonymous Sign-in is enabled in your Firebase project.",
+        variant: "destructive",
+      });
     }
   };
   
