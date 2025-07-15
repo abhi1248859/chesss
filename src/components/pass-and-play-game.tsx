@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { RotateCcw, Wand2, History, Users, Swords } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
+import WinScreen from './win-screen';
 
 interface PassAndPlayGameProps {
   onBackToMenu: () => void;
@@ -114,9 +115,17 @@ export default function PassAndPlayGame({ onBackToMenu }: PassAndPlayGameProps) 
     }, []);
   }, [moveHistory]);
 
+  const winner = useMemo(() => {
+    if (!game.gameOver) return null;
+    if (game.isCheckmate) {
+        return game.turn === 'w' ? 'Black' : 'White';
+    }
+    return 'draw';
+  }, [game.gameOver, game.isCheckmate, game.turn]);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full items-start">
-      <div className="lg:col-span-2">
+      <div className="lg:col-span-2 relative">
         <ChessBoard
           board={board}
           onSquareClick={handleSquareClick}
@@ -125,6 +134,14 @@ export default function PassAndPlayGame({ onBackToMenu }: PassAndPlayGameProps) 
           playerColor={playerColor}
           kingInCheckPosition={kingCheckPosition}
         />
+        {winner && (
+            <WinScreen 
+                winner={winner}
+                gameMode="pass-play"
+                onRematch={handleNewGame}
+                onHome={onBackToMenu}
+            />
+        )}
       </div>
 
       <div className="flex flex-col gap-6 w-full">

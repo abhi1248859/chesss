@@ -13,6 +13,7 @@ import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Loader2, Swords, Trophy, RefreshCw } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
+import WinScreen from './win-screen';
 
 interface MultiplayerGameProps {
   gameId: string;
@@ -165,48 +166,15 @@ const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, anonymousId, onRema
     }
   };
 
-  const RematchControls = () => {
-    const offeredBy = gameData?.rematch?.offeredBy;
-
-    if (isOfferingRematch) {
-      return (
-        <div className="text-center p-2 text-sm text-muted-foreground">
-          <Loader2 className="inline-block mr-2 h-4 w-4 animate-spin" />
-          Rematch offer sent. Waiting for opponent...
-        </div>
-      );
+  const winnerData = useMemo(() => {
+    if (gameData?.status !== 'finished') return null;
+    if (game.isCheckmate) {
+        // if it's white's turn to move and they are checkmated, black wins.
+        const winnerObj = game.turn === 'w' ? gameData.player2 : gameData.player1;
+        return winnerObj?.id === anonymousId ? 'You' : 'Opponent';
     }
-    
-    // Accept button should be shown to the user who DID NOT offer the rematch.
-    if (offeredBy && offeredBy !== anonymousId) {
-       return (
-        <div className="text-center p-2 space-y-2">
-          <p className="text-sm font-semibold">Opponent has offered a rematch!</p>
-          <Button onClick={handleAcceptRematch}>
-            <Swords className="mr-2 h-4 w-4" /> Accept Rematch
-          </Button>
-        </div>
-      );
-    }
-    
-    // Offer button or waiting message
-    if (offeredBy && offeredBy === anonymousId) {
-        return (
-            <div className="text-center p-2 text-sm text-muted-foreground">
-                <Loader2 className="inline-block mr-2 h-4 w-4 animate-spin" />
-                Waiting for opponent to accept...
-            </div>
-        );
-    }
-
-    return (
-      <div className="text-center p-2">
-        <Button onClick={handleOfferRematch} variant="outline">
-          <RefreshCw className="mr-2 h-4 w-4" /> Request Rematch
-        </Button>
-      </div>
-    );
-  };
+    return 'draw';
+  }, [gameData, game, anonymousId]);
 
   if (!gameData) {
     return (
@@ -227,7 +195,7 @@ const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, anonymousId, onRema
   }
 
   const isMyTurn = gameData.turn === playerColor;
-  const winner = gameData.status === 'finished' && !game.isStalemate ? (game.turn === 'w' ? gameData.player2 : gameData.player1) : null;
+  const dbWinner = gameData.status === 'finished' && !game.isStalemate ? (game.turn === 'w' ? gameData.player2 : gameData.player1) : null;
   const isDraw = game.isStalemate;
   const displayColor = playerColor || 'w'; // Default to white's perspective for spectators
 
@@ -247,6 +215,20 @@ const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, anonymousId, onRema
                 <p className="text-2xl font-bold text-white">Opponent's Turn</p>
             </div>
         )}
+        {winnerData && (
+          <WinScreen
+            winner={winnerData}
+            gameMode="friend"
+            onRematch={gameData?.rematch?.offeredBy ? handleAcceptRematch : handleOfferRematch}
+            onHome={() => window.location.reload()} // A simple way to go home is to reload the page
+            rematchState={
+                isOfferingRematch ? 'offering' :
+                gameData?.rematch?.offeredBy && gameData?.rematch?.offeredBy !== anonymousId ? 'offered' :
+                gameData?.rematch?.offeredBy && gameData?.rematch?.offeredBy === anonymousId ? 'waiting' :
+                null
+            }
+          />
+        )}
       </div>
 
       <div className="flex flex-col gap-6 w-full">
@@ -262,24 +244,19 @@ const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, anonymousId, onRema
             </CardHeader>
             <CardContent className="space-y-4">
                {gameData.player2 ? (
-                <PlayerInfo pData={gameData.player2} color="Black" isTurn={gameData.turn === 'b'} isWinner={winner?.id === gameData.player2.id} />
+                <PlayerInfo pData={gameData.player2} color="Black" isTurn={gameData.turn === 'b'} isWinner={dbWinner?.id === gameData.player2.id} />
                ) : (
                 <div className="p-3 rounded-lg flex items-center gap-3 bg-muted/50 text-muted-foreground">Waiting for Player 2...</div>
                )}
                <div className="flex justify-center items-center">
                     <Swords className="text-muted-foreground" />
                </div>
-               <PlayerInfo pData={gameData.player1} color="White" isTurn={gameData.turn === 'w'} isWinner={winner?.id === gameData.player1.id} />
+               <PlayerInfo pData={gameData.player1} color="White" isTurn={gameData.turn === 'w'} isWinner={dbWinner?.id === gameData.player1.id} />
                
                {isDraw && (
                  <div className="text-center font-bold text-lg text-accent">It's a Draw!</div>
                )}
             </CardContent>
-             {gameData.status === 'finished' && (
-              <CardFooter className="justify-center border-t pt-4">
-                <RematchControls />
-              </CardFooter>
-            )}
         </Card>
         <Card>
             <CardHeader>

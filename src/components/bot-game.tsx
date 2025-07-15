@@ -6,6 +6,7 @@ import GameControls from '@/components/game-controls';
 import { ChessGame } from '@/lib/chess-logic';
 import type { Position } from '@/lib/chess-logic';
 import { Loader2 } from 'lucide-react';
+import WinScreen from './win-screen';
 
 interface BotGameProps {
   initialDifficulty: number;
@@ -27,7 +28,7 @@ export default function BotGame({ initialDifficulty, onBackToMenu }: BotGameProp
   const [difficulty, setDifficulty] = useState<number>(initialDifficulty);
   const [kingCheckPosition, setKingCheckPosition] = useState<Position | null>(null);
 
-  const playerColor = 'w';
+  const playerColor = 'w'; // Human player is always white in bot games
 
   const handleNewGame = useCallback(() => {
     const newGame = new ChessGame();
@@ -175,6 +176,14 @@ export default function BotGame({ initialDifficulty, onBackToMenu }: BotGameProp
     return `${game.turn === 'w' ? 'White' : 'Black'}'s Turn`;
   }, [game, fenHistory]);
 
+  const winner = useMemo(() => {
+    if (!game.gameOver) return null;
+    if (game.isCheckmate) {
+        return game.turn === 'b' ? 'You' : 'Bot'; // if it's black's turn to move and they are checkmated, white wins.
+    }
+    return 'draw';
+  }, [game.gameOver, game.isCheckmate, game.turn]);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full items-start">
       <div className="lg:col-span-2 relative">
@@ -186,10 +195,18 @@ export default function BotGame({ initialDifficulty, onBackToMenu }: BotGameProp
           playerColor={playerColor}
           kingInCheckPosition={kingCheckPosition}
         />
-         {isAITurn && (
+         {isAITurn && !game.gameOver && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
                 <Loader2 className="h-16 w-16 animate-spin text-primary" />
             </div>
+        )}
+        {winner && (
+            <WinScreen 
+                winner={winner}
+                gameMode="bot"
+                onRematch={handleNewGame}
+                onHome={onBackToMenu}
+            />
         )}
       </div>
 
