@@ -29,16 +29,17 @@ export default function Home() {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        setAuthInitialized(true);
+        if (!authInitialized) setAuthInitialized(true);
       } else {
         // Try to sign in anonymously
         signInAnonymously(auth)
           .then(() => {
-             setAuthInitialized(true);
+             // onAuthStateChanged will handle setting the user
+             if (!authInitialized) setAuthInitialized(true);
           })
           .catch((error) => {
             console.error("Anonymous sign-in failed:", error);
-            if (error.code === 'auth/admin-restricted-operation') {
+            if (error.code === 'auth/admin-restricted-operation' || error.code === 'auth/operation-not-allowed') {
                  toast({
                     title: "Multiplayer Disabled",
                     description: "Please enable Anonymous Sign-In in your Firebase Console (Authentication > Sign-in method) to play online.",
@@ -48,16 +49,16 @@ export default function Home() {
             } else {
                  toast({
                     title: "Authentication Error",
-                    description: "Could not sign-in to play online. Check console for details.",
+                    description: "Could not sign-in for multiplayer. Check console for details.",
                     variant: "destructive",
                  });
             }
-            setAuthInitialized(true); // Still allow app to load for offline modes
+            if (!authInitialized) setAuthInitialized(true); // Still allow app to load for offline modes
         });
       }
     });
     return () => unsubscribe();
-  }, [toast]);
+  }, [toast, authInitialized]);
   
   // Effect to automatically start multiplayer game when opponent joins
   useEffect(() => {
@@ -93,7 +94,7 @@ export default function Home() {
     } else {
       toast({
         title: "Login Required",
-        description: "Authentication is required for multiplayer. Please wait a moment and try again, or check if Anonymous Sign-in is enabled in your Firebase project.",
+        description: "Authentication is required for multiplayer. Please enable Anonymous Sign-in in your Firebase project.",
         variant: "destructive",
       });
     }
@@ -129,7 +130,7 @@ export default function Home() {
 
   const renderContent = () => {
     if (!authInitialized) {
-        return <p>Initializing...</p>
+        return <p className='text-center'>Initializing authentication...</p>
     }
     switch (gameMode) {
       case 'menu':
