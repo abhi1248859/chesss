@@ -6,17 +6,15 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { createGame, joinGame } from '@/lib/firestore';
-import type { User } from 'firebase/auth';
 import { Loader2, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface MultiplayerLobbyProps {
-  user: User;
   onGameCreated: (gameId: string) => void;
   onGameJoined: (gameId: string) => void;
 }
 
-const MultiplayerLobby: FC<MultiplayerLobbyProps> = ({ user, onGameCreated, onGameJoined }) => {
+const MultiplayerLobby: FC<MultiplayerLobbyProps> = ({ onGameCreated, onGameJoined }) => {
   const [joinCode, setJoinCode] = useState('');
   const [createdGameId, setCreatedGameId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState({ create: false, join: false });
@@ -25,7 +23,8 @@ const MultiplayerLobby: FC<MultiplayerLobbyProps> = ({ user, onGameCreated, onGa
   const handleCreateGame = async () => {
     setIsLoading(prev => ({ ...prev, create: true }));
     try {
-      const newGameId = await createGame(user);
+      // The user object is no longer needed here
+      const newGameId = await createGame();
       setCreatedGameId(newGameId);
       onGameCreated(newGameId);
     } catch (error) {
@@ -43,12 +42,13 @@ const MultiplayerLobby: FC<MultiplayerLobbyProps> = ({ user, onGameCreated, onGa
     }
     setIsLoading(prev => ({ ...prev, join: true }));
     try {
-      const success = await joinGame(joinCode.trim(), user);
+      // The user object is no longer needed here
+      const success = await joinGame(joinCode.trim());
       if (success) {
         toast({ title: "Success!", description: "Joining game..." });
         onGameJoined(joinCode.trim());
       } else {
-        toast({ title: "Join Failed", description: "Game not found, is full, or you can't join your own game.", variant: "destructive" });
+        toast({ title: "Join Failed", description: "Game not found or is full.", variant: "destructive" });
       }
     } catch (error) {
       console.error("Error joining game:", error);

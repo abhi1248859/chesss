@@ -16,6 +16,7 @@ export default function Home() {
   
   const [gameMode, setGameMode] = useState<'menu' | 'bot' | 'friend-lobby' | 'friend-game'>('menu');
   const [multiplayerGameId, setMultiplayerGameId] = useState<string | null>(null);
+  const [playerInfo, setPlayerInfo] = useState<{uid: string, color: 'w' | 'b'} | null>(null);
 
   // This is a mock user object. Multiplayer will not work without real authentication.
   // This is a placeholder to prevent the app from crashing.
@@ -31,17 +32,24 @@ export default function Home() {
       const unsub = onSnapshot(doc(db, "games", multiplayerGameId), (doc) => {
         const gameData = doc.data();
         if (gameData?.status === 'active') {
+          // Determine if we are player 1 or 2
+          if (gameData.player1.uid === playerInfo?.uid) {
+            setPlayerInfo(prev => ({...prev!, color: 'w'}));
+          } else {
+            setPlayerInfo({uid: gameData.player2.uid, color: 'b'});
+          }
           setGameMode('friend-game');
         }
       });
       return () => unsub();
     }
-  }, [gameMode, multiplayerGameId]);
+  }, [gameMode, multiplayerGameId, playerInfo?.uid]);
 
 
   const resetToMenu = useCallback(() => {
     setGameMode('menu');
     setMultiplayerGameId(null);
+    setPlayerInfo(null);
   }, []);
 
   const handleSelectBotGame = (newDifficulty: number) => {
@@ -84,9 +92,10 @@ export default function Home() {
       case 'menu':
         return <GameSetup onSelectBotGame={handleSelectBotGame} onSelectFriendGame={handleSelectFriendGame} />;
       case 'friend-lobby':
-        return <MultiplayerLobby user={mockUser} onGameCreated={handleGameCreated} onGameJoined={handleGameJoined} />;
+        return <MultiplayerLobby onGameCreated={handleGameCreated} onGameJoined={handleGameJoined} />;
       case 'friend-game':
          if (!multiplayerGameId) return <p>Error: No game ID found.</p>;
+         // Pass mockUser for now, as real user info is not available without auth
          return <MultiplayerGame gameId={multiplayerGameId} user={mockUser} onRematchAccepted={handleRematchAccepted} />;
       case 'bot':
         return <BotGame initialDifficulty={difficulty} onBackToMenu={resetToMenu} />;
