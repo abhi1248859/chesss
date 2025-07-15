@@ -7,7 +7,8 @@ import { Slider } from './ui/slider';
 import { Label } from './ui/label';
 import { Separator } from './ui/separator';
 import { ScrollArea } from './ui/scroll-area';
-import { BrainCircuit, RotateCcw, Search, Wand2, Loader2, Info, History, Home } from 'lucide-react';
+import { BrainCircuit, RotateCcw, Search, Wand2, Loader2, Info, History, Home, Zap, ShieldAlert, Target } from 'lucide-react';
+import type { AnalyzePositionOutput } from '@/ai/flows/analyze-position';
 
 interface GameControlsProps {
   status: string;
@@ -17,7 +18,7 @@ interface GameControlsProps {
   onUndo: () => void;
   onAnalysis: () => void;
   onSuggestion: () => void;
-  analysisResult: string;
+  analysisResult: AnalyzePositionOutput | null;
   suggestionResult: { move: string; reason: string } | null;
   isLoading: { analysis: boolean; suggestion: boolean };
   fenHistory: string[];
@@ -67,6 +68,15 @@ const GameControls: FC<GameControlsProps> = ({
   }, [moveHistory]);
   
   const difficultyLabel = getPowerLevelLabel(difficulty);
+
+  const renderMarkdownList = (markdown: string) => {
+    return markdown.split('*').filter(s => s.trim()).map((item, index) => (
+        <li key={index} className="flex gap-2 items-start">
+            <span className="text-accent mt-1">▶</span>
+            <span>{item.trim()}</span>
+        </li>
+    ));
+  };
 
   return (
     <Card className="shadow-lg h-full flex flex-col">
@@ -135,23 +145,37 @@ const GameControls: FC<GameControlsProps> = ({
           </div>
         </div>
         
-        <ScrollArea className="h-40 w-full rounded-md border p-4 bg-muted/30 flex-grow">
+        <ScrollArea className="h-48 w-full rounded-md border p-4 bg-muted/30 flex-grow">
             {isLoading.analysis && <p className="text-sm text-muted-foreground animate-pulse">Analyzing position...</p>}
             {analysisResult && (
-                <div>
-                    <h4 className="font-bold text-accent mb-2">Analysis</h4>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{analysisResult}</p>
+                <div className="space-y-4 text-sm">
+                    <div>
+                        <h4 className="font-bold text-accent mb-2 flex items-center gap-2"><Zap /> Strengths</h4>
+                        <ul className="space-y-1 list-inside text-muted-foreground">{renderMarkdownList(analysisResult.strengths)}</ul>
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-destructive mb-2 flex items-center gap-2"><ShieldAlert /> Weaknesses</h4>
+                        <ul className="space-y-1 list-inside text-muted-foreground">{renderMarkdownList(analysisResult.weaknesses)}</ul>
+                    </div>
+                     <div>
+                        <h4 className="font-bold text-primary mb-2 flex items-center gap-2"><Target /> Best Moves</h4>
+                        <ul className="space-y-1 list-inside text-muted-foreground">{renderMarkdownList(analysisResult.bestMoves)}</ul>
+                    </div>
+                    <Separator/>
+                     <div>
+                        <h4 className="font-bold text-accent mb-1">Suggested Move: <span className='font-mono'>{analysisResult.suggestedMove}</span></h4>
+                    </div>
                 </div>
             )}
-             {isLoading.suggestion && !suggestionResult && <p className="text-sm text-muted-foreground animate-pulse">Getting hint...</p>}
+            {isLoading.suggestion && !suggestionResult && <p className="text-sm text-muted-foreground animate-pulse">Getting hint...</p>}
             {suggestionResult && (
-                <div className={analysisResult ? "mt-4" : ""}>
+                <div>
                     <h4 className="font-bold text-accent mb-2">Suggested Move: {suggestionResult.move}</h4>
                     <p className="text-sm text-muted-foreground whitespace-pre-wrap">{suggestionResult.reason}</p>
                 </div>
             )}
             {!isLoading.analysis && !analysisResult && !isLoading.suggestion && !suggestionResult && (
-                <p className="text-sm text-center text-muted-foreground pt-12">Use AI assistance to get hints or analysis of the position.</p>
+                <p className="text-sm text-center text-muted-foreground pt-16">Use AI assistance to get hints or analysis of the position.</p>
             )}
         </ScrollArea>
       </CardContent>

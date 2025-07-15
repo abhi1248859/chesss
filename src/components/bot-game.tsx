@@ -7,6 +7,7 @@ import { ChessGame } from '@/lib/chess-logic';
 import type { Position } from '@/lib/chess-logic';
 import { Loader2 } from 'lucide-react';
 import WinScreen from './win-screen';
+import type { AnalyzePositionOutput } from '@/ai/flows/analyze-position';
 
 interface BotGameProps {
   initialDifficulty: number;
@@ -22,7 +23,7 @@ export default function BotGame({ initialDifficulty, onBackToMenu }: BotGameProp
   const [validMoves, setValidMoves] = useState<Position[]>([]);
   const [isAITurn, setIsAITurn] = useState(false);
   
-  const [analysis, setAnalysis] = useState<string>('');
+  const [analysis, setAnalysis] = useState<AnalyzePositionOutput | null>(null);
   const [suggestion, setSuggestion] = useState<{ move: string; reason: string } | null>(null);
   const [isLoading, setIsLoading] = useState({ analysis: false, suggestion: false });
   const [difficulty, setDifficulty] = useState<number>(initialDifficulty);
@@ -39,7 +40,7 @@ export default function BotGame({ initialDifficulty, onBackToMenu }: BotGameProp
     setSelectedSquare(null);
     setValidMoves([]);
     setIsAITurn(false);
-    setAnalysis('');
+    setAnalysis(null);
     setSuggestion(null);
     setKingCheckPosition(null);
   }, []);
@@ -144,14 +145,14 @@ export default function BotGame({ initialDifficulty, onBackToMenu }: BotGameProp
   const handleAnalysis = useCallback(async () => {
     if (isAITurn) return;
     setIsLoading(prev => ({ ...prev, analysis: true }));
-    setAnalysis('');
+    setAnalysis(null);
     setSuggestion(null);
     try {
       const result = await game.analyzePosition();
-      setAnalysis(result.analysis);
+      setAnalysis(result);
     } catch(error) {
       console.error(error);
-      setAnalysis('Could not analyze position.');
+      setAnalysis(null);
     } finally {
       setIsLoading(prev => ({ ...prev, analysis: false }));
     }
@@ -161,7 +162,7 @@ export default function BotGame({ initialDifficulty, onBackToMenu }: BotGameProp
     if (isAITurn) return;
     setIsLoading(prev => ({ ...prev, suggestion: true }));
     setSuggestion(null);
-    setAnalysis('');
+    setAnalysis(null);
     try {
       const result = await game.getAIBestMoveWithReason(difficulty);
       setSuggestion(result);
