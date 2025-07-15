@@ -1,11 +1,10 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow anyone to read and write to the games collection.
-    // This is useful for anonymous/guest users.
-    match /games/{gameId} {
+    // This rule allows anyone to read and write to any document in your database.
+    // This is useful for development and testing, but BE VERY CAREFUL in production.
+    match /{document=**} {
       allow read, write: if true;
     }
   }
