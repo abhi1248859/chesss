@@ -4,7 +4,6 @@ import { useState, type FC } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Bot, Users, ArrowLeft } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 interface GameSetupProps {
   onSelectBotGame: (difficulty: number) => void;
@@ -20,7 +19,7 @@ const difficultyLevels = [
   { name: 'Impossible', value: 100 },
 ];
 
-const GameSetup: FC<GameSetupProps> = ({ onSelectBotGame, onSelectFriendGame, onSelectPassAndPlay }) => {
+const GameSetup: FC<GameSetupProps> = ({ onSelectBotGame, onSelectFriendGame }) => {
   const [view, setView] = useState<'menu' | 'bot-setup'>('menu');
   const [selectedDifficulty, setSelectedDifficulty] = useState<{ name: string; value: number } | null>(null);
 
@@ -88,16 +87,13 @@ const GameSetup: FC<GameSetupProps> = ({ onSelectBotGame, onSelectFriendGame, on
           <Button size="lg" onClick={() => setView('bot-setup')}>
             <Bot className="mr-2" /> Play vs. Bot
           </Button>
-          <Button size="lg" variant="secondary" onClick={onSelectPassAndPlay}>
-            <Users className="mr-2" /> Pass & Play
-          </Button>
           <Button 
             size="lg" 
             variant="secondary" 
             onClick={onSelectFriendGame}
             className="w-full"
           >
-            <Users className="mr-2" /> Play vs. Friend
+            <Users className="mr-2" /> Play with Online Friend
           </Button>
         </CardContent>
       </Card>
