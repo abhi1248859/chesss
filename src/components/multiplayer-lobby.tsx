@@ -8,28 +8,27 @@ import { Label } from './ui/label';
 import { createGame, joinGame } from '@/lib/firestore';
 import { Loader2, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { User } from 'firebase/auth';
 
 interface MultiplayerLobbyProps {
-  user: User;
+  anonymousId: string;
   onGameCreated: (gameId: string) => void;
   onGameJoined: (gameId: string) => void;
 }
 
-const MultiplayerLobby: FC<MultiplayerLobbyProps> = ({ user, onGameCreated, onGameJoined }) => {
+const MultiplayerLobby: FC<MultiplayerLobbyProps> = ({ anonymousId, onGameCreated, onGameJoined }) => {
   const [joinCode, setJoinCode] = useState('');
   const [createdGameId, setCreatedGameId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState({ create: false, join: false });
   const { toast } = useToast();
 
   const handleCreateGame = async () => {
-    if (!user) {
-        toast({ title: "Error", description: "You must be authenticated to create a game.", variant: "destructive" });
+    if (!anonymousId) {
+        toast({ title: "Error", description: "Could not identify player. Please refresh.", variant: "destructive" });
         return;
     }
     setIsLoading(prev => ({ ...prev, create: true }));
     try {
-      const newGameId = await createGame(user);
+      const newGameId = await createGame(anonymousId);
       setCreatedGameId(newGameId);
       onGameCreated(newGameId);
     } catch (error) {
@@ -41,8 +40,8 @@ const MultiplayerLobby: FC<MultiplayerLobbyProps> = ({ user, onGameCreated, onGa
   };
 
   const handleJoinGame = async () => {
-    if (!user) {
-        toast({ title: "Error", description: "You must be authenticated to join a game.", variant: "destructive" });
+    if (!anonymousId) {
+        toast({ title: "Error", description: "Could not identify player. Please refresh.", variant: "destructive" });
         return;
     }
     if (!joinCode) {
@@ -51,7 +50,7 @@ const MultiplayerLobby: FC<MultiplayerLobbyProps> = ({ user, onGameCreated, onGa
     }
     setIsLoading(prev => ({ ...prev, join: true }));
     try {
-      const success = await joinGame(joinCode.trim(), user);
+      const success = await joinGame(joinCode.trim(), anonymousId);
       if (success) {
         toast({ title: "Success!", description: "Joining game..." });
         onGameJoined(joinCode.trim());

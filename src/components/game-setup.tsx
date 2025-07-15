@@ -10,7 +10,6 @@ interface GameSetupProps {
   onSelectBotGame: (difficulty: number) => void;
   onSelectFriendGame: () => void;
   onSelectPassAndPlay: () => void;
-  isMultiplayerDisabled: boolean;
 }
 
 const difficultyLevels = [
@@ -21,7 +20,7 @@ const difficultyLevels = [
   { name: 'Impossible', value: 100 },
 ];
 
-const GameSetup: FC<GameSetupProps> = ({ onSelectBotGame, onSelectFriendGame, onSelectPassAndPlay, isMultiplayerDisabled }) => {
+const GameSetup: FC<GameSetupProps> = ({ onSelectBotGame, onSelectFriendGame, onSelectPassAndPlay }) => {
   const [view, setView] = useState<'menu' | 'bot-setup'>('menu');
   const [selectedDifficulty, setSelectedDifficulty] = useState<{ name: string; value: number } | null>(null);
 
@@ -92,28 +91,14 @@ const GameSetup: FC<GameSetupProps> = ({ onSelectBotGame, onSelectFriendGame, on
           <Button size="lg" variant="secondary" onClick={onSelectPassAndPlay}>
             <Users className="mr-2" /> Pass & Play
           </Button>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="w-full">
-                  <Button 
-                    size="lg" 
-                    variant="secondary" 
-                    onClick={onSelectFriendGame}
-                    disabled={isMultiplayerDisabled}
-                    className="w-full"
-                  >
-                    <Users className="mr-2" /> Play vs. Friend
-                  </Button>
-                </div>
-              </TooltipTrigger>
-              {isMultiplayerDisabled && (
-                <TooltipContent>
-                  <p>Please log in with GitHub to play with a friend.</p>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
+          <Button 
+            size="lg" 
+            variant="secondary" 
+            onClick={onSelectFriendGame}
+            className="w-full"
+          >
+            <Users className="mr-2" /> Play vs. Friend
+          </Button>
         </CardContent>
       </Card>
     </div>

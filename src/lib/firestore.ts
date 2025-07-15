@@ -1,9 +1,15 @@
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
 import { nanoid } from 'nanoid';
-import type { User } from 'firebase/auth';
 
-export async function createGame(user: User): Promise<string> {
+const generatePlayerObject = (id: string, name: string) => ({
+    id,
+    name: name,
+    photoURL: `https://api.dicebear.com/8.x/bottts/svg?seed=${id}`
+});
+
+
+export async function createGame(anonymousId: string): Promise<string> {
     const gameId = nanoid(8);
     const gameRef = doc(db, 'games', gameId);
     
@@ -11,11 +17,7 @@ export async function createGame(user: User): Promise<string> {
         gameId,
         fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
         moveHistory: [],
-        player1: {
-            uid: user.uid,
-            name: user.displayName || 'Anonymous Player',
-            photoURL: user.photoURL || `https://placehold.co/40x40.png`
-        },
+        player1: generatePlayerObject(anonymousId, 'Player 1'),
         player2: null,
         status: 'waiting',
         turn: 'w',
@@ -29,17 +31,13 @@ export async function createGame(user: User): Promise<string> {
     return gameId;
 }
 
-export async function joinGame(gameId: string, user: User): Promise<boolean> {
+export async function joinGame(gameId: string, anonymousId: string): Promise<boolean> {
     const gameRef = doc(db, 'games', gameId);
     const gameSnap = await getDoc(gameRef);
 
     if (gameSnap.exists() && !gameSnap.data().player2) {
         await updateDoc(gameRef, {
-            player2: {
-                uid: user.uid,
-                name: user.displayName || 'Anonymous Player 2',
-                photoURL: user.photoURL || `https://placehold.co/40x40.png`
-            },
+            player2: generatePlayerObject(anonymousId, 'Player 2'),
             status: 'active',
             updatedAt: serverTimestamp()
         });
@@ -49,19 +47,20 @@ export async function joinGame(gameId: string, user: User): Promise<boolean> {
 }
 
 
-export async function offerRematch(gameId: string, userId: string): Promise<void> {
+export async function offerRematch(gameId: string, anonymousId: string): Promise<void> {
     const gameRef = doc(db, 'games', gameId);
     await updateDoc(gameRef, {
-        'rematch.offeredBy': userId,
+        'rematch.offeredBy': anonymousId,
     });
 }
 
 // This function needs the user data from the game document itself now
-export async function acceptRematch(gameId: string, oldGameData: any): Promise<void> {
+export async function acceptRematch(gameId: string, oldGameData: any, myAnonymousId: string): Promise<void> {
     const newGameId = nanoid(8);
     const newGameRef = doc(db, 'games', newGameId);
     
     // Create a new game with players from the old game.
+    // The player accepting the rematch is now player 2
     await setDoc(newGameRef, {
         gameId: newGameId,
         fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',

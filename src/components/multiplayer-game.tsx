@@ -13,16 +13,14 @@ import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { Loader2, Swords, Trophy, RefreshCw } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
-import type { User } from 'firebase/auth';
-
 
 interface MultiplayerGameProps {
   gameId: string;
-  user: User;
+  anonymousId: string;
   onRematchAccepted: (newGameId: string) => void;
 }
 
-const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, user, onRematchAccepted }) => {
+const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, anonymousId, onRematchAccepted }) => {
   const [gameData, setGameData] = useState<any>(null);
   const [game, setGame] = useState(() => new ChessGame());
   const [board, setBoard] = useState(game.getBoard());
@@ -32,11 +30,11 @@ const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, user, onRematchAcce
   const [isOfferingRematch, setIsOfferingRematch] = useState(false);
 
   const playerColor: PlayerColor | null = useMemo(() => {
-    if (!gameData || !user) return null;
-    if (gameData.player1.uid === user.uid) return 'w';
-    if (gameData.player2?.uid === user.uid) return 'b';
+    if (!gameData || !anonymousId) return null;
+    if (gameData.player1.id === anonymousId) return 'w';
+    if (gameData.player2?.id === anonymousId) return 'b';
     return null; // Spectator or user not in game
-  }, [gameData, user]);
+  }, [gameData, anonymousId]);
 
 
   // Effect to listen for game state changes from Firestore
@@ -151,7 +149,7 @@ const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, user, onRematchAcce
   const handleOfferRematch = async () => {
     setIsOfferingRematch(true);
     try {
-      await offerRematch(gameId, user.uid);
+      await offerRematch(gameId, anonymousId);
     } catch (error) {
       console.error("Error offering rematch:", error);
       setIsOfferingRematch(false);
@@ -161,7 +159,7 @@ const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, user, onRematchAcce
   const handleAcceptRematch = async () => {
     if (!gameData) return;
     try {
-      await acceptRematch(gameId, gameData);
+      await acceptRematch(gameId, gameData, anonymousId);
     } catch (error) {
       console.error("Error accepting rematch:", error);
     }
@@ -180,7 +178,7 @@ const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, user, onRematchAcce
     }
     
     // Accept button should be shown to the user who DID NOT offer the rematch.
-    if (offeredBy && offeredBy !== user.uid) {
+    if (offeredBy && offeredBy !== anonymousId) {
        return (
         <div className="text-center p-2 space-y-2">
           <p className="text-sm font-semibold">Opponent has offered a rematch!</p>
@@ -192,7 +190,7 @@ const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, user, onRematchAcce
     }
     
     // Offer button or waiting message
-    if (offeredBy && offeredBy === user.uid) {
+    if (offeredBy && offeredBy === anonymousId) {
         return (
             <div className="text-center p-2 text-sm text-muted-foreground">
                 <Loader2 className="inline-block mr-2 h-4 w-4 animate-spin" />
@@ -264,14 +262,14 @@ const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, user, onRematchAcce
             </CardHeader>
             <CardContent className="space-y-4">
                {gameData.player2 ? (
-                <PlayerInfo pData={gameData.player2} color="Black" isTurn={gameData.turn === 'b'} isWinner={winner?.uid === gameData.player2.uid} />
+                <PlayerInfo pData={gameData.player2} color="Black" isTurn={gameData.turn === 'b'} isWinner={winner?.id === gameData.player2.id} />
                ) : (
                 <div className="p-3 rounded-lg flex items-center gap-3 bg-muted/50 text-muted-foreground">Waiting for Player 2...</div>
                )}
                <div className="flex justify-center items-center">
                     <Swords className="text-muted-foreground" />
                </div>
-               <PlayerInfo pData={gameData.player1} color="White" isTurn={gameData.turn === 'w'} isWinner={winner?.uid === gameData.player1.uid} />
+               <PlayerInfo pData={gameData.player1} color="White" isTurn={gameData.turn === 'w'} isWinner={winner?.id === gameData.player1.id} />
                
                {isDraw && (
                  <div className="text-center font-bold text-lg text-accent">It's a Draw!</div>
