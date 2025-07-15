@@ -20,7 +20,7 @@ const firebaseConfig = {
 if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
   // In a build environment, this will stop the build and log the error.
   // In a browser, it will show the error in the console.
-  // In Firebase Studio, these should be populated automatically.
+  // In Firebase Studio, these should be replaced automatically.
   console.warn(
     'Firebase config is not set. Please ensure you have set them in your environment settings for deployment. In Firebase Studio, these should be populated automatically.'
   );
