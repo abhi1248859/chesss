@@ -16,7 +16,7 @@ export async function createGame(user: User): Promise<string> {
             photoURL: user.photoURL
         },
         player2: null,
-        status: 'waiting', // waiting, active, finished
+        status: 'waiting',
         turn: 'w',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
