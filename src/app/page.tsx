@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
@@ -7,12 +6,14 @@ import MultiplayerLobby from '@/components/multiplayer-lobby';
 import MultiplayerGame from '@/components/multiplayer-game';
 import BotGame from '@/components/bot-game';
 import PassAndPlayGame from '@/components/pass-and-play-game';
-import { Home as HomeIcon } from 'lucide-react';
+import { Home as HomeIcon, LogIn, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { getAuth, signInAnonymously, onAuthStateChanged, type User } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, type User } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
+import { signInWithGitHub, signOutUser } from '@/lib/auth';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function Home() {
   const [difficulty, setDifficulty] = useState<number>(30);
@@ -23,42 +24,14 @@ export default function Home() {
   const [authInitialized, setAuthInitialized] = useState(false);
   const { toast } = useToast();
 
-  // Authenticate user anonymously on component mount
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        if (!authInitialized) setAuthInitialized(true);
-      } else {
-        // Try to sign in anonymously
-        signInAnonymously(auth)
-          .then(() => {
-             // onAuthStateChanged will handle setting the user
-             if (!authInitialized) setAuthInitialized(true);
-          })
-          .catch((error) => {
-            console.error("Anonymous sign-in failed:", error);
-            if (error.code === 'auth/admin-restricted-operation' || error.code === 'auth/operation-not-allowed') {
-                 toast({
-                    title: "Multiplayer Disabled",
-                    description: "Please enable Anonymous Sign-In in your Firebase Console (Authentication > Sign-in method) to play online.",
-                    variant: "destructive",
-                    duration: 10000,
-                 });
-            } else {
-                 toast({
-                    title: "Authentication Error",
-                    description: "Could not sign-in for multiplayer. Check console for details.",
-                    variant: "destructive",
-                 });
-            }
-            if (!authInitialized) setAuthInitialized(true); // Still allow app to load for offline modes
-        });
-      }
+      setUser(currentUser);
+      if (!authInitialized) setAuthInitialized(true);
     });
     return () => unsubscribe();
-  }, [toast, authInitialized]);
+  }, [authInitialized]);
   
   // Effect to automatically start multiplayer game when opponent joins
   useEffect(() => {
@@ -94,7 +67,7 @@ export default function Home() {
     } else {
       toast({
         title: "Login Required",
-        description: "Authentication is required for multiplayer. Please enable Anonymous Sign-in in your Firebase project.",
+        description: "Please log in with GitHub to play with a friend.",
         variant: "destructive",
       });
     }
@@ -112,6 +85,22 @@ export default function Home() {
   const handleRematchAccepted = useCallback((newGameId: string) => {
     setMultiplayerGameId(newGameId);
   }, []);
+  
+  const handleLogin = async () => {
+    try {
+      await signInWithGitHub();
+      toast({ title: 'Logged In!', description: 'You are now logged in with GitHub.' });
+    } catch (error: any) {
+      console.error(error);
+      toast({ title: 'Login Failed', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOutUser();
+    resetToMenu();
+    toast({ title: 'Logged Out', description: 'You have been logged out.' });
+  };
   
   const getHeaderTitle = () => {
     switch (gameMode) {
@@ -134,7 +123,7 @@ export default function Home() {
     }
     switch (gameMode) {
       case 'menu':
-        return <GameSetup onSelectBotGame={handleSelectBotGame} onSelectFriendGame={handleSelectFriendGame} onSelectPassAndPlay={handleSelectPassAndPlay} />;
+        return <GameSetup onSelectBotGame={handleSelectBotGame} onSelectFriendGame={handleSelectFriendGame} onSelectPassAndPlay={handleSelectPassAndPlay} isMultiplayerDisabled={!user} />;
       case 'pass-play':
         return <PassAndPlayGame onBackToMenu={resetToMenu} />;
       case 'friend-lobby':
@@ -146,7 +135,7 @@ export default function Home() {
       case 'bot':
         return <BotGame initialDifficulty={difficulty} onBackToMenu={resetToMenu} />;
       default:
-        return <GameSetup onSelectBotGame={handleSelectBotGame} onSelectFriendGame={handleSelectFriendGame} onSelectPassAndPlay={handleSelectPassAndPlay} />;
+        return <GameSetup onSelectBotGame={handleSelectBotGame} onSelectFriendGame={handleSelectFriendGame} onSelectPassAndPlay={handleSelectPassAndPlay} isMultiplayerDisabled={!user} />;
     }
   };
 
@@ -173,7 +162,25 @@ export default function Home() {
                <h1 className="text-xl sm:text-3xl font-bold tracking-tighter">{getHeaderTitle()}</h1>
             </div>
             <div className="flex-1 flex justify-end items-center gap-2 sm:gap-4">
-              {/* Auth-related UI removed */}
+              {!authInitialized ? (
+                <div className="w-24 h-8 bg-muted rounded-md animate-pulse" />
+              ) : user ? (
+                <>
+                  <span className="text-sm font-medium hidden sm:inline">{user.displayName}</span>
+                  <Avatar>
+                    <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? 'User'}/>
+                    <AvatarFallback>{user.displayName?.charAt(0) ?? 'U'}</AvatarFallback>
+                  </Avatar>
+                  <Button onClick={handleLogout} variant="outline" size="sm">
+                    <LogOut className="mr-2" />
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <Button onClick={handleLogin}>
+                  <LogIn className="mr-2" /> Login with GitHub
+                </Button>
+              )}
             </div>
         </header>
 
