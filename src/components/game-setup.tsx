@@ -3,7 +3,7 @@
 import { useState, type FC } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Bot, Users, ArrowLeft, UserSwitch } from 'lucide-react';
+import { Bot, Users, ArrowLeft } from 'lucide-react';
 
 interface GameSetupProps {
   onSelectBotGame: (difficulty: number) => void;
@@ -88,7 +88,7 @@ const GameSetup: FC<GameSetupProps> = ({ onSelectBotGame, onSelectFriendGame, on
             <Bot className="mr-2" /> Play vs. Bot
           </Button>
           <Button size="lg" variant="secondary" onClick={onSelectPassAndPlay}>
-            <UserSwitch className="mr-2" /> Pass & Play
+            <Users className="mr-2" /> Pass & Play
           </Button>
           <Button size="lg" variant="secondary" onClick={onSelectFriendGame}>
             <Users className="mr-2" /> Play vs. Friend
