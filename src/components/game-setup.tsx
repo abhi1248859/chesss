@@ -19,7 +19,7 @@ const difficultyLevels = [
   { name: 'Impossible', value: 100 },
 ];
 
-const GameSetup: FC<GameSetupProps> = ({ onSelectBotGame, onSelectFriendGame }) => {
+const GameSetup: FC<GameSetupProps> = ({ onSelectBotGame, onSelectFriendGame, onSelectPassAndPlay }) => {
   const [view, setView] = useState<'menu' | 'bot-setup'>('menu');
   const [selectedDifficulty, setSelectedDifficulty] = useState<{ name: string; value: number } | null>(null);
 
