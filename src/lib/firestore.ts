@@ -23,13 +23,18 @@ const generateGameCode = (): string => {
 export async function createGame(anonymousId: string): Promise<string> {
     let gameId;
     let exists = true;
-    
-    // Loop until a unique gameId is found
-    while(exists) {
+    let attempts = 0; // Safety break
+
+    while (exists && attempts < 10) {
         gameId = generateGameCode();
         const gameRef = doc(db, 'games', gameId);
         const gameSnap = await getDoc(gameRef);
         exists = gameSnap.exists();
+        attempts++;
+    }
+
+    if (!gameId) {
+        throw new Error("Failed to generate a unique game code.");
     }
 
     const gameRef = doc(db, 'games', gameId);
