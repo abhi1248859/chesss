@@ -1,6 +1,5 @@
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
-import { nanoid } from 'nanoid';
 
 const generatePlayerObject = (id: string, name: string) => ({
     id,
@@ -8,9 +7,31 @@ const generatePlayerObject = (id: string, name: string) => ({
     photoURL: `https://api.dicebear.com/8.x/bottts/svg?seed=${id}`
 });
 
+/**
+ * Generates a random 6-character alphanumeric string for the game code.
+ */
+const generateGameCode = (): string => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+};
+
 
 export async function createGame(anonymousId: string): Promise<string> {
-    const gameId = nanoid(8);
+    let gameId;
+    let exists = true;
+    
+    // Loop until a unique gameId is found
+    while(exists) {
+        gameId = generateGameCode();
+        const gameRef = doc(db, 'games', gameId);
+        const gameSnap = await getDoc(gameRef);
+        exists = gameSnap.exists();
+    }
+
     const gameRef = doc(db, 'games', gameId);
     
     await setDoc(gameRef, {
@@ -56,7 +77,18 @@ export async function offerRematch(gameId: string, anonymousId: string): Promise
 
 // This function needs the user data from the game document itself now
 export async function acceptRematch(gameId: string, oldGameData: any, myAnonymousId: string): Promise<void> {
-    const newGameId = nanoid(8);
+    
+    let newGameId;
+    let exists = true;
+    
+    // Loop until a unique gameId is found for the new game
+    while(exists) {
+        newGameId = generateGameCode();
+        const gameRef = doc(db, 'games', newGameId);
+        const gameSnap = await getDoc(gameRef);
+        exists = gameSnap.exists();
+    }
+
     const newGameRef = doc(db, 'games', newGameId);
     
     // Create a new game with players from the old game.
