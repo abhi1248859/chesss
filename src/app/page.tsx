@@ -5,6 +5,7 @@ import GameSetup from '@/components/game-setup';
 import MultiplayerLobby from '@/components/multiplayer-lobby';
 import MultiplayerGame from '@/components/multiplayer-game';
 import BotGame from '@/components/bot-game';
+import PassAndPlayGame from '@/components/pass-and-play-game';
 import { Home as HomeIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -58,7 +59,6 @@ export default function Home() {
   };
   
   const handleSelectPassAndPlay = () => {
-    // This is no longer used from the UI but kept for potential future use.
     setGameMode('pass-play');
   };
 
@@ -105,6 +105,8 @@ export default function Home() {
          return <MultiplayerGame gameId={multiplayerGameId} anonymousId={anonymousId} onRematchAccepted={handleRematchAccepted} />;
       case 'bot':
         return <BotGame initialDifficulty={difficulty} onBackToMenu={resetToMenu} />;
+      case 'pass-play':
+        return <PassAndPlayGame onBackToMenu={resetToMenu} />;
       default:
         return <GameSetup onSelectBotGame={handleSelectBotGame} onSelectFriendGame={handleSelectFriendGame} onSelectPassAndPlay={handleSelectPassAndPlay} />;
     }
