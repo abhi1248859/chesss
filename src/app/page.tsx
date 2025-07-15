@@ -177,7 +177,10 @@ export default function Home() {
                   </Button>
                 </>
               ) : (
-                null
+                <Button onClick={handleLogin} variant="outline">
+                  <LogIn className="mr-2" />
+                  Login with GitHub
+                </Button>
               )}
             </div>
         </header>
