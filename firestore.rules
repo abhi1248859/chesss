@@ -2,9 +2,10 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow anyone to read, write, and create games
+    // Allow anyone to read, create, and update games.
+    // This is for demonstration purposes and should be made more secure for a production app.
     match /games/{gameId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if true;
     }
   }
 }
