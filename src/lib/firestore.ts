@@ -27,13 +27,17 @@ export async function createGame(anonymousId: string): Promise<string> {
 
     while (exists && attempts < 10) {
         gameId = generateGameCode();
+        if (!gameId) { // Just in case generateGameCode returns empty
+            attempts++;
+            continue;
+        }
         const gameRef = doc(db, 'games', gameId);
         const gameSnap = await getDoc(gameRef);
         exists = gameSnap.exists();
         attempts++;
     }
 
-    if (!gameId) {
+    if (!gameId || (exists && attempts >= 10)) {
         throw new Error("Failed to generate a unique game code.");
     }
 
@@ -44,7 +48,7 @@ export async function createGame(anonymousId: string): Promise<string> {
         fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
         moveHistory: [],
         player1: generatePlayerObject(anonymousId, 'Player 1'),
-        player2: null,
+        player2: { id: null, name: 'Waiting...', photoURL: '' }, // Initial placeholder for player2
         status: 'waiting',
         turn: 'w',
         createdAt: serverTimestamp(),
@@ -61,7 +65,7 @@ export async function joinGame(gameId: string, anonymousId: string): Promise<boo
     const gameRef = doc(db, 'games', gameId);
     const gameSnap = await getDoc(gameRef);
 
-    if (gameSnap.exists() && !gameSnap.data().player2) {
+    if (gameSnap.exists() && gameSnap.data().status === 'waiting') {
         await updateDoc(gameRef, {
             player2: generatePlayerObject(anonymousId, 'Player 2'),
             status: 'active',
@@ -85,13 +89,23 @@ export async function acceptRematch(gameId: string, oldGameData: any, myAnonymou
     
     let newGameId;
     let exists = true;
+    let attempts = 0; // Safety break
     
     // Loop until a unique gameId is found for the new game
-    while(exists) {
+    while(exists && attempts < 10) {
         newGameId = generateGameCode();
+        if (!newGameId) {
+            attempts++;
+            continue;
+        }
         const gameRef = doc(db, 'games', newGameId);
         const gameSnap = await getDoc(gameRef);
         exists = gameSnap.exists();
+        attempts++;
+    }
+
+    if (!newGameId || (exists && attempts >= 10)) {
+        throw new Error("Failed to generate a unique game code for rematch.");
     }
 
     const newGameRef = doc(db, 'games', newGameId);
