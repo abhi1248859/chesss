@@ -134,11 +134,11 @@ const MultiplayerGame: FC<MultiplayerGameProps> = ({ gameId, anonymousId, onRema
   const PlayerInfo = ({ pData, color, isTurn, isWinner } : {pData: any, color: 'White' | 'Black', isTurn: boolean, isWinner?: boolean}) => (
     <div className={`p-3 rounded-lg flex items-center gap-3 transition-all ${isTurn && gameData.status === 'active' ? 'bg-primary/20 ring-2 ring-primary' : 'bg-muted/50'}`}>
         <Avatar>
-            <AvatarImage src={pData.photoURL} alt={pData.name} />
-            <AvatarFallback>{pData.name?.charAt(0) || color.charAt(0)}</AvatarFallback>
+            <AvatarImage src={pData?.photoURL} alt={pData?.name} />
+            <AvatarFallback>{pData?.name?.charAt(0) || color.charAt(0)}</AvatarFallback>
         </Avatar>
         <div className="flex-1">
-            <p className="font-semibold">{pData.name || color}</p>
+            <p className="font-semibold">{pData?.name || color}</p>
             <p className="text-sm text-muted-foreground">{color}</p>
         </div>
         {isWinner && <Trophy className="text-accent" />}

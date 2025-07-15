@@ -2,8 +2,9 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow anyone to read, create, and update games.
-    // This is for demonstration purposes and should be made more secure for a production app.
+    // Public access for game rooms. In a production app, you might want to add
+    // more specific rules, e.g., only allowing players in the game to write.
+    // For this login-free system, public access is appropriate.
     match /games/{gameId} {
       allow read, write: if true;
     }

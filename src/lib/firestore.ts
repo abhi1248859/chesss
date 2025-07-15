@@ -48,7 +48,7 @@ export async function createGame(anonymousId: string): Promise<string> {
         fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
         moveHistory: [],
         player1: generatePlayerObject(anonymousId, 'Player 1'),
-        player2: { id: null, name: 'Waiting...', photoURL: '' }, // Initial placeholder for player2
+        player2: null, // Player 2 will be added on join
         status: 'waiting',
         turn: 'w',
         createdAt: serverTimestamp(),

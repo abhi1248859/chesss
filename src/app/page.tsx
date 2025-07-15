@@ -39,7 +39,7 @@ export default function Home() {
     if (gameMode === 'friend-lobby' && multiplayerGameId && anonymousId) {
       const unsub = onSnapshot(doc(db, "games", multiplayerGameId), (doc) => {
         const gameData = doc.data();
-        if (gameData?.status === 'active' && gameData.player2) {
+        if (gameData?.status === 'active' && gameData.player2?.id) {
           setGameMode('friend-game');
         }
       });
