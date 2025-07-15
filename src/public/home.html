@@ -1,30 +1,95 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - Ads Page</title>
-    <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background-color: #f0f0f0; }
-        .ad-container { width: 728px; height: 90px; background-color: #ccc; border: 1px solid #999; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: #666; }
-        .content { margin-top: 20px; text-align: center; }
+<!doctype html>
+<html ⚡ lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Home - AMP Ads Page</title>
+    <link rel="canonical" href="self.html" />
+    <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
+    <style amp-custom>
+      body {
+        font-family: sans-serif;
+        background-color: #f0f0f0;
+        text-align: center;
+        padding: 50px;
+      }
+      .content {
+        margin-top: 40px;
+      }
     </style>
-    <!-- 1. Add your ad network's script here -->
-    <!-- For example, from Google AdSense: -->
-    <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
-</head>
-<body>
+    <style amp-boilerplate>
+      body {
+        -webkit-animation: -amp-start 8s steps(1,end) 0s 1 normal both;
+        -moz-animation: -amp-start 8s steps(1,end) 0s 1 normal both;
+        -ms-animation: -amp-start 8s steps(1,end) 0s 1 normal both;
+        animation: -amp-start 8s steps(1,end) 0s 1 normal both;
+      }
+      @-webkit-keyframes -amp-start {
+        from {
+          visibility: hidden;
+        }
+        to {
+          visibility: visible;
+        }
+      }
+      @-moz-keyframes -amp-start {
+        from {
+          visibility: hidden;
+        }
+        to {
+          visibility: visible;
+        }
+      }
+      @-ms-keyframes -amp-start {
+        from {
+          visibility: hidden;
+        }
+        to {
+          visibility: visible;
+        }
+      }
+      @keyframes -amp-start {
+        from {
+          visibility: hidden;
+        }
+        to {
+          visibility: visible;
+        }
+      }
+    </style>
+    <noscript>
+      <style amp-boilerplate>
+        body {
+          -webkit-animation: none;
+          -moz-animation: none;
+          -ms-animation: none;
+          animation: none;
+        }
+      </style>
+    </noscript>
 
-    <h1>Advertisement Example Page</h1>
+    <!-- AMP runtime script -->
+    <script async src="https://cdn.ampproject.org/v0.js"></script>
 
-    <div class="ad-container">
-        <!-- 2. This is where your ad will appear -->
-        <p>Ad Placeholder (728x90)</p>
-    </div>
+    <!-- ✅ AMP auto ads script -->
+    <script async custom-element="amp-auto-ads"
+      src="https://cdn.ampproject.org/v0/amp-auto-ads-0.1.js">
+    </script>
+
+    
+  </head>
+
+  <body>
+
+    <!-- ✅ AMP auto ad placement tag -->
+    <amp-auto-ads type="adsense"
+      data-ad-client="ca-pub-7826497976822219">
+    </amp-auto-ads>
+
+    <h1>Advertisement Example Page (AMP)</h1>
 
     <div class="content">
-        <p>This is a sample HTML page to display ads.</p>
+      <p>This is a sample AMP HTML page with AdSense Auto Ads enabled.</p>
     </div>
 
-</body>
+  </body>
 </html>
