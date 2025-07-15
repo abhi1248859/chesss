@@ -3,8 +3,8 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow public read and write access to the games collection
-    // This is for demonstration purposes and should be secured for a real application
+    // Allow anyone to read and write to the games collection.
+    // This is useful for anonymous/guest users.
     match /games/{gameId} {
       allow read, write: if true;
     }
